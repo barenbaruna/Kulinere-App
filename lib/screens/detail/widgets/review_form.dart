@@ -109,10 +109,8 @@ class _ReviewFormState extends State<ReviewForm> {
           TextFormField(
             controller: _reviewController,
             decoration: const InputDecoration(
-              labelText: 'Review',
+              hintText: 'Tulis review Anda...',
               border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.comment_outlined),
-              alignLabelWithHint: true,
             ),
             maxLines: 3,
             textInputAction: TextInputAction.done,

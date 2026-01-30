@@ -5,6 +5,7 @@ import 'package:kulinere/data/models/restaurant_detail.dart';
 import 'package:kulinere/providers/restaurant_detail_provider.dart';
 import 'package:kulinere/screens/detail/widgets/menu_section.dart';
 import 'package:kulinere/screens/detail/widgets/restaurant_header.dart';
+import 'package:kulinere/screens/detail/widgets/review_form.dart';
 import 'package:kulinere/screens/detail/widgets/review_section.dart';
 import 'package:kulinere/states/restaurant_detail_state.dart';
 import 'package:kulinere/widgets/error_widget.dart';
@@ -103,6 +104,17 @@ class _DetailScreenState extends State<DetailScreen> {
                 ),
                 const SizedBox(height: 24),
                 ReviewSection(reviews: restaurant.customerReviews),
+                const SizedBox(height: 24),
+                const Divider(),
+                const SizedBox(height: 16),
+                ReviewForm(
+                  restaurantId: restaurant.id,
+                  onSubmitted: () {
+                    context.read<RestaurantDetailProvider>().fetchRestaurantDetail(
+                      restaurant.id,
+                    );
+                  },
+                ),
                 const SizedBox(height: 32),
               ],
             ),

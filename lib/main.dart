@@ -6,7 +6,8 @@ import 'package:kulinere/providers/bookmark_provider.dart';
 import 'package:kulinere/providers/navigation_provider.dart';
 import 'package:kulinere/providers/restaurant_detail_provider.dart';
 import 'package:kulinere/providers/restaurant_list_provider.dart';
-import 'package:kulinere/screens/home/home_screen.dart';
+import 'package:kulinere/providers/restaurant_search_provider.dart';
+import 'package:kulinere/screens/main/main_screen.dart';
 
 void main() {
   runApp(const KulinereApp());
@@ -26,6 +27,9 @@ class KulinereApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (ctx) => RestaurantDetailProvider(ctx.read<ApiService>()),
         ),
+        ChangeNotifierProvider(
+          create: (ctx) => RestaurantSearchProvider(ctx.read<ApiService>()),
+        ),
         ChangeNotifierProvider(create: (_) => BookmarkProvider()),
         ChangeNotifierProvider(create: (_) => NavigationProvider()),
       ],
@@ -35,7 +39,7 @@ class KulinereApp extends StatelessWidget {
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.system,
-        home: const HomeScreen(),
+        home: const MainScreen(),
       ),
     );
   }

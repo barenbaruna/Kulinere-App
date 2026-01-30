@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kulinere/data/api/api_service.dart';
 import 'package:kulinere/data/models/customer_review.dart';
+import 'package:kulinere/data/models/restaurant_detail.dart';
 import 'package:kulinere/states/restaurant_detail_state.dart';
 
 class RestaurantDetailProvider extends ChangeNotifier {
@@ -46,20 +47,16 @@ class RestaurantDetailProvider extends ChangeNotifier {
         review: review,
       );
 
-      final updatedDetail = currentState.data;
       final updatedReviews = List<CustomerReview>.from(response.customerReviews);
-
-      _state = RestaurantDetailLoadedState(
-        _copyDetailWithReviews(updatedDetail, updatedReviews),
+      final updatedDetail = currentState.data.copyWith(
+        customerReviews: updatedReviews,
       );
+
+      _state = RestaurantDetailLoadedState(updatedDetail);
       notifyListeners();
     } catch (e) {
       rethrow;
     }
-  }
-
-  dynamic _copyDetailWithReviews(dynamic detail, List<CustomerReview> reviews) {
-    return detail;
   }
 
   void reset() {

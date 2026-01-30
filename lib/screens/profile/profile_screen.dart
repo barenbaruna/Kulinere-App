@@ -158,15 +158,7 @@ class ProfileScreen extends StatelessWidget {
                     backgroundColor: AppColors.goldVisible(
                       isDark,
                     ).withOpacity(0.2),
-                    child: Text(
-                      _name[0],
-                      style: TextStyle(
-                        fontSize: 36,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.goldVisible(isDark),
-                        fontFamily: 'PlayfairDisplay',
-                      ),
-                    ),
+                    backgroundImage: const AssetImage('images/profile_photo.jpg'),
                   ),
                   const SizedBox(width: 16),
                   Expanded(

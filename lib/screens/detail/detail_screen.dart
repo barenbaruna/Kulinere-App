@@ -13,8 +13,13 @@ import 'package:kulinere/widgets/loading_widget.dart';
 
 class DetailScreen extends StatefulWidget {
   final String restaurantId;
+  final String heroTagPrefix;
 
-  const DetailScreen({super.key, required this.restaurantId});
+  const DetailScreen({
+    super.key,
+    required this.restaurantId,
+    this.heroTagPrefix = 'home',
+  });
 
   @override
   State<DetailScreen> createState() => _DetailScreenState();
@@ -49,7 +54,8 @@ class _DetailScreenState extends State<DetailScreen> {
           if (state is RestaurantDetailErrorState) {
             return AppErrorWidget(
               message: state.error,
-              onRetry: () => provider.fetchRestaurantDetail(widget.restaurantId),
+              onRetry: () =>
+                  provider.fetchRestaurantDetail(widget.restaurantId),
             );
           }
 
@@ -64,95 +70,132 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   Widget _buildContent(BuildContext context, RestaurantDetail restaurant) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          RestaurantHeader(restaurant: restaurant),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildInfoSection(context, restaurant),
-                const SizedBox(height: 24),
-                _buildCategoriesSection(context, restaurant),
-                const SizedBox(height: 24),
-                Text(
-                  'Deskripsi',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.gold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  restaurant.description,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                  textAlign: TextAlign.justify,
-                ),
-                const SizedBox(height: 24),
-                MenuSection(
-                  title: 'Makanan',
-                  icon: Icons.restaurant_menu,
-                  items: restaurant.menus.foods,
-                ),
-                const SizedBox(height: 24),
-                MenuSection(
-                  title: 'Minuman',
-                  icon: Icons.local_cafe,
-                  items: restaurant.menus.drinks,
-                ),
-                const SizedBox(height: 24),
-                ReviewSection(reviews: restaurant.customerReviews),
-                const SizedBox(height: 24),
-                const Divider(),
-                const SizedBox(height: 16),
-                ReviewForm(
-                  restaurantId: restaurant.id,
-                  onSubmitted: () {
-                    context.read<RestaurantDetailProvider>().fetchRestaurantDetail(
-                      restaurant.id,
-                    );
-                  },
-                ),
-                const SizedBox(height: 32),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-  Widget _buildInfoSection(BuildContext context, RestaurantDetail restaurant) {
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+    return RefreshIndicator(
+      onRefresh: () async {
+        await context.read<RestaurantDetailProvider>().fetchRestaurantDetail(
+          widget.restaurantId,
+        );
+      },
+      color: AppColors.goldVisible(isDark),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                const Icon(Icons.location_on, size: 20, color: AppColors.gold),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    restaurant.address,
-                    style: Theme.of(context).textTheme.bodyLarge,
+            RestaurantHeader(
+              restaurant: restaurant,
+              heroTagPrefix: widget.heroTagPrefix,
+            ),
+            // Info Section
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: _buildInfoSection(context, restaurant),
+            ),
+            // Categories Section
+            if (restaurant.categories.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _buildCategoriesSection(context, restaurant),
+              ),
+            // Description Section
+            // Description Section - Blockquote Style
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.darkSurface
+                      : AppColors.lightSurface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border(
+                    left: BorderSide(
+                      color: AppColors.goldVisible(isDark),
+                      width: 4,
+                    ),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(isDark ? 0.15 : 0.05),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.format_quote_rounded,
+                            color: AppColors.goldVisible(isDark),
+                            size: 22,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Tentang Restoran',
+                            style: TextStyle(
+                              fontFamily: 'PlayfairDisplay',
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: isDark
+                                  ? AppColors.darkTextPrimary
+                                  : AppColors.lightTextPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        restaurant.description,
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodyLarge?.copyWith(height: 1.6),
+                        textAlign: TextAlign.justify,
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(Icons.location_city, size: 20, color: AppColors.gold),
-                const SizedBox(width: 8),
-                Text(
-                  restaurant.city,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-              ],
+            // Menu Sections - MenuSection handles its own padding
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: MenuSection(
+                title: 'Makanan',
+                icon: Icons.restaurant_menu,
+                items: restaurant.menus.foods,
+              ),
+            ),
+            const SizedBox(height: 24),
+            MenuSection(
+              title: 'Minuman',
+              icon: Icons.local_cafe,
+              items: restaurant.menus.drinks,
+            ),
+            // Reviews Section
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 8),
+                  ReviewSection(reviews: restaurant.customerReviews),
+                  const SizedBox(height: 24),
+                  Divider(
+                    color: isDark
+                        ? AppColors.darkDivider
+                        : AppColors.lightDivider,
+                  ),
+                  const SizedBox(height: 16),
+                  ReviewForm(restaurantId: restaurant.id),
+                  const SizedBox(height: 32),
+                ],
+              ),
             ),
           ],
         ),
@@ -160,17 +203,122 @@ class _DetailScreenState extends State<DetailScreen> {
     );
   }
 
-  Widget _buildCategoriesSection(BuildContext context, RestaurantDetail restaurant) {
+  Widget _buildInfoSection(BuildContext context, RestaurantDetail restaurant) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? AppColors.darkDivider : AppColors.lightDivider,
+        ),
+      ),
+      child: Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.gold.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.location_on,
+                  size: 20,
+                  color: AppColors.gold,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Alamat',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.lightTextSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      restaurant.address,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.gold.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.location_city,
+                  size: 20,
+                  color: AppColors.gold,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Kota',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.lightTextSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      restaurant.city,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoriesSection(
+    BuildContext context,
+    RestaurantDetail restaurant,
+  ) {
     if (restaurant.categories.isEmpty) return const SizedBox();
 
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: restaurant.categories.map<Widget>((category) => Chip(
-        label: Text(category.name),
-        backgroundColor: AppColors.gold.withOpacity(0.2),
-        side: BorderSide.none,
-      )).toList(),
+      children: restaurant.categories
+          .map<Widget>(
+            (category) => Chip(
+              label: Text(category.name),
+              backgroundColor: AppColors.gold.withOpacity(0.2),
+              side: BorderSide.none,
+            ),
+          )
+          .toList(),
     );
   }
 }

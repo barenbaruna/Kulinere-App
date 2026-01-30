@@ -13,44 +13,67 @@ class BookmarkScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Favorit'),
-      ),
-      body: Consumer2<BookmarkProvider, RestaurantListProvider>(
-        builder: (context, bookmarkProvider, listProvider, child) {
-          final bookmarkedIds = bookmarkProvider.bookmarkedIds;
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Custom Header - matching Home & Search style
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: Text(
+                'Favorit',
+                style: TextStyle(
+                  fontFamily: 'PlayfairDisplay',
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.goldVisible(isDark),
+                ),
+              ),
+            ),
+            // Content
+            Expanded(
+              child: Consumer2<BookmarkProvider, RestaurantListProvider>(
+                builder: (context, bookmarkProvider, listProvider, child) {
+                  final bookmarkedIds = bookmarkProvider.bookmarkedIds;
 
-          if (bookmarkedIds.isEmpty) {
-            return _buildEmptyState(context);
-          }
+                  if (bookmarkedIds.isEmpty) {
+                    return _buildEmptyState(context);
+                  }
 
-          final listState = listProvider.state;
-          if (listState is! RestaurantListLoadedState) {
-            return _buildEmptyState(context);
-          }
+                  final listState = listProvider.state;
+                  if (listState is! RestaurantListLoadedState) {
+                    return _buildEmptyState(context);
+                  }
 
-          final bookmarkedRestaurants = listState.data
-              .where((r) => bookmarkedIds.contains(r.id))
-              .toList();
+                  final bookmarkedRestaurants = listState.data
+                      .where((r) => bookmarkedIds.contains(r.id))
+                      .toList();
 
-          if (bookmarkedRestaurants.isEmpty) {
-            return _buildEmptyState(context);
-          }
+                  if (bookmarkedRestaurants.isEmpty) {
+                    return _buildEmptyState(context);
+                  }
 
-          return ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: bookmarkedRestaurants.length,
-            itemBuilder: (context, index) {
-              final restaurant = bookmarkedRestaurants[index];
-              return _BookmarkCard(
-                restaurant: restaurant,
-                onTap: () => _navigateToDetail(context, restaurant.id),
-                onRemove: () => bookmarkProvider.removeBookmark(restaurant.id),
-              );
-            },
-          );
-        },
+                  return ListView.builder(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: bookmarkedRestaurants.length,
+                    itemBuilder: (context, index) {
+                      final restaurant = bookmarkedRestaurants[index];
+                      return _BookmarkCard(
+                        restaurant: restaurant,
+                        onTap: () => _navigateToDetail(context, restaurant.id),
+                        onRemove: () =>
+                            bookmarkProvider.removeBookmark(restaurant.id),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -85,7 +108,8 @@ class BookmarkScreen extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => DetailScreen(restaurantId: restaurantId),
+        builder: (context) =>
+            DetailScreen(restaurantId: restaurantId, heroTagPrefix: 'bookmark'),
       ),
     );
   }
@@ -117,6 +141,7 @@ class _BookmarkCard extends StatelessWidget {
       child: RestaurantCard(
         restaurant: restaurant,
         onTap: onTap,
+        heroTagPrefix: 'bookmark',
       ),
     );
   }

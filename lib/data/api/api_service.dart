@@ -19,8 +19,12 @@ class ApiService {
   }
 
   Future<RestaurantDetailResponse> getRestaurantDetail(String id) async {
+    // Add timestamp to bypass API cache
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
     final response = await http.get(
-      Uri.parse('${ApiConstants.baseUrl}${ApiConstants.detailEndpoint}/$id'),
+      Uri.parse(
+        '${ApiConstants.baseUrl}${ApiConstants.detailEndpoint}/$id?_t=$timestamp',
+      ),
     );
 
     if (response.statusCode == 200) {

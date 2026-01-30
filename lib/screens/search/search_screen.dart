@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:kulinere/core/theme/app_colors.dart';
 import 'package:kulinere/core/utils/debouncer.dart';
+import 'package:kulinere/data/models/restaurant.dart';
 import 'package:kulinere/providers/restaurant_search_provider.dart';
 import 'package:kulinere/screens/detail/detail_screen.dart';
 import 'package:kulinere/screens/home/widgets/restaurant_card.dart';
 import 'package:kulinere/states/restaurant_search_state.dart';
 import 'package:kulinere/widgets/error_widget.dart';
-import 'package:kulinere/widgets/loading_widget.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -20,6 +20,7 @@ class _SearchScreenState extends State<SearchScreen> {
   final _controller = TextEditingController();
   final _debouncer = Debouncer();
   final _focusNode = FocusNode();
+  String _sortBy = 'default'; // default, rating
 
   @override
   void initState() {
@@ -49,102 +50,249 @@ class _SearchScreenState extends State<SearchScreen> {
     _focusNode.requestFocus();
   }
 
+  List<Restaurant> _sortResults(List<Restaurant> restaurants) {
+    if (_sortBy == 'rating') {
+      return [...restaurants]..sort((a, b) => b.rating.compareTo(a.rating));
+    }
+    return restaurants;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      appBar: AppBar(
-        title: TextField(
-          controller: _controller,
-          focusNode: _focusNode,
-          decoration: InputDecoration(
-            hintText: 'Cari restoran...',
-            border: InputBorder.none,
-            hintStyle: TextStyle(
-              color: Theme.of(context).textTheme.bodyMedium?.color,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Text(
+                'Jelajahi',
+                style: TextStyle(
+                  fontFamily: 'PlayfairDisplay',
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.goldVisible(isDark),
+                ),
+              ),
             ),
-          ),
-          style: Theme.of(context).textTheme.bodyLarge,
-          onChanged: _onSearchChanged,
-        ),
-        actions: [
-          if (_controller.text.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.clear),
-              onPressed: _clearSearch,
-            ),
-        ],
-      ),
-      body: Consumer<RestaurantSearchProvider>(
-        builder: (context, provider, child) {
-          final state = provider.state;
-
-          if (state is RestaurantSearchNoneState) {
-            return _buildEmptyHint(context);
-          }
-
-          if (state is RestaurantSearchLoadingState) {
-            return const LoadingWidget(message: 'Mencari restoran...');
-          }
-
-          if (state is RestaurantSearchErrorState) {
-            return AppErrorWidget(
-              message: state.error,
-              onRetry: () => provider.searchRestaurants(provider.lastQuery),
-            );
-          }
-
-          if (state is RestaurantSearchLoadedState) {
-            if (state.data.isEmpty) {
-              return _buildNoResults(context, provider.lastQuery);
-            }
-
-            return ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: state.data.length,
-              itemBuilder: (context, index) {
-                final restaurant = state.data[index];
-                return RestaurantCard(
-                  restaurant: restaurant,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => DetailScreen(
-                        restaurantId: restaurant.id,
+            // Search Bar
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.darkSurface
+                      : AppColors.lightSurface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isDark
+                        ? AppColors.darkDivider
+                        : AppColors.lightDivider,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const SizedBox(width: 16),
+                    Icon(
+                      Icons.search,
+                      color: AppColors.goldVisible(isDark),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextField(
+                        controller: _controller,
+                        focusNode: _focusNode,
+                        textAlignVertical: TextAlignVertical.center,
+                        decoration: InputDecoration(
+                          hintText: 'Cari restoran, kota, atau makanan...',
+                          border: InputBorder.none,
+                          isDense: true,
+                          contentPadding: EdgeInsets.zero,
+                          hintStyle: TextStyle(
+                            color: isDark
+                                ? AppColors.darkTextSecondary
+                                : AppColors.lightTextSecondary,
+                            fontSize: 14,
+                          ),
+                        ),
+                        style: Theme.of(context).textTheme.bodyLarge,
+                        onChanged: _onSearchChanged,
                       ),
                     ),
+                    if (_controller.text.isNotEmpty)
+                      IconButton(
+                        icon: Icon(
+                          Icons.clear,
+                          color: isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.lightTextSecondary,
+                        ),
+                        onPressed: _clearSearch,
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            // Filter Chips
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  _FilterChip(
+                    label: 'Semua',
+                    isSelected: _sortBy == 'default',
+                    onTap: () => setState(() => _sortBy = 'default'),
                   ),
-                );
-              },
-            );
-          }
+                  const SizedBox(width: 8),
+                  _FilterChip(
+                    label: 'Rating Tertinggi',
+                    isSelected: _sortBy == 'rating',
+                    icon: Icons.star,
+                    onTap: () => setState(() => _sortBy = 'rating'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Results
+            Expanded(
+              child: Consumer<RestaurantSearchProvider>(
+                builder: (context, provider, child) {
+                  final state = provider.state;
 
-          return const SizedBox();
-        },
+                  if (state is RestaurantSearchNoneState) {
+                    return _buildEmptyHint(context, isDark);
+                  }
+
+                  if (state is RestaurantSearchLoadingState) {
+                    return _buildLoadingState(context, isDark);
+                  }
+
+                  if (state is RestaurantSearchErrorState) {
+                    return AppErrorWidget(
+                      message: state.error,
+                      onRetry: () =>
+                          provider.searchRestaurants(provider.lastQuery),
+                    );
+                  }
+
+                  if (state is RestaurantSearchLoadedState) {
+                    if (state.data.isEmpty) {
+                      return _buildNoResults(
+                        context,
+                        provider.lastQuery,
+                        isDark,
+                      );
+                    }
+
+                    final sortedResults = _sortResults(state.data);
+                    return ListView.builder(
+                      padding: const EdgeInsets.only(top: 8, bottom: 100),
+                      itemCount: sortedResults.length,
+                      itemBuilder: (context, index) {
+                        final restaurant = sortedResults[index];
+                        return RestaurantCard(
+                          restaurant: restaurant,
+                          heroTagPrefix: 'search',
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => DetailScreen(
+                                restaurantId: restaurant.id,
+                                heroTagPrefix: 'search',
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  }
+
+                  return const SizedBox();
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildEmptyHint(BuildContext context) {
+  Widget _buildLoadingState(BuildContext context, bool isDark) {
+    return Column(
+      children: [
+        LinearProgressIndicator(
+          backgroundColor: isDark
+              ? AppColors.darkDivider
+              : AppColors.lightDivider,
+          color: AppColors.gold,
+        ),
+        Expanded(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.search,
+                  size: 48,
+                  color: AppColors.gold.withOpacity(0.5),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Mencari restoran...',
+                  style: TextStyle(
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.lightTextSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyHint(BuildContext context, bool isDark) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.search,
-            size: 64,
-            color: AppColors.gold.withOpacity(0.5),
-          ),
+          Icon(Icons.search, size: 64, color: AppColors.gold.withOpacity(0.3)),
           const SizedBox(height: 16),
           Text(
-            'Ketik untuk mencari restoran',
-            style: Theme.of(context).textTheme.bodyLarge,
+            'Temukan restoran favoritmu',
+            style: TextStyle(
+              fontFamily: 'PlayfairDisplay',
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: isDark
+                  ? AppColors.darkTextPrimary
+                  : AppColors.lightTextPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Ketik untuk mulai mencari',
+            style: TextStyle(
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.lightTextSecondary,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildNoResults(BuildContext context, String query) {
+  Widget _buildNoResults(BuildContext context, String query, bool isDark) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -152,15 +300,100 @@ class _SearchScreenState extends State<SearchScreen> {
           Icon(
             Icons.restaurant_menu,
             size: 64,
-            color: AppColors.gold.withOpacity(0.5),
+            color: AppColors.gold.withOpacity(0.3),
           ),
           const SizedBox(height: 16),
           Text(
-            'Tidak ditemukan restoran untuk "$query"',
-            style: Theme.of(context).textTheme.bodyLarge,
-            textAlign: TextAlign.center,
+            'Tidak ditemukan',
+            style: TextStyle(
+              fontFamily: 'PlayfairDisplay',
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: isDark
+                  ? AppColors.darkTextPrimary
+                  : AppColors.lightTextPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              'Restoran "$query" tidak ditemukan.\nCoba kata kunci lain.',
+              style: TextStyle(
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.lightTextSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final IconData? icon;
+  final VoidCallback onTap;
+
+  const _FilterChip({
+    required this.label,
+    required this.isSelected,
+    this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.gold.withOpacity(0.2)
+              : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.gold
+                : (isDark ? AppColors.darkDivider : AppColors.lightDivider),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(
+                icon,
+                size: 14,
+                color: isSelected
+                    ? AppColors.gold
+                    : (isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.lightTextSecondary),
+              ),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                color: isSelected
+                    ? AppColors.gold
+                    : (isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.lightTextPrimary),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

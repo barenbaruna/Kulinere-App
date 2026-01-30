@@ -7,15 +7,20 @@ import 'package:provider/provider.dart';
 
 class RestaurantHeader extends StatelessWidget {
   final RestaurantDetail restaurant;
+  final String heroTagPrefix;
 
-  const RestaurantHeader({super.key, required this.restaurant});
+  const RestaurantHeader({
+    super.key,
+    required this.restaurant,
+    this.heroTagPrefix = 'home',
+  });
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
         Hero(
-          tag: 'restaurant-image-${restaurant.id}',
+          tag: '$heroTagPrefix-restaurant-image-${restaurant.id}',
           child: CachedImage(
             imageUrl: restaurant.largeImageUrl,
             width: double.infinity,
@@ -32,10 +37,7 @@ class RestaurantHeader extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  Colors.transparent,
-                  Colors.black.withOpacity(0.7),
-                ],
+                colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
               ),
             ),
             child: Column(
@@ -43,9 +45,9 @@ class RestaurantHeader extends StatelessWidget {
               children: [
                 Text(
                   restaurant.name,
-                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                    color: Colors.white,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.headlineLarge?.copyWith(color: Colors.white),
                 ),
                 const SizedBox(height: 4),
                 Row(
@@ -54,18 +56,18 @@ class RestaurantHeader extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(
                       restaurant.rating.toString(),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.gold,
-                      ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.titleMedium?.copyWith(color: AppColors.gold),
                     ),
                     const SizedBox(width: 16),
                     Icon(Icons.location_on, size: 16, color: Colors.white70),
                     const SizedBox(width: 4),
                     Text(
                       restaurant.city,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Colors.white70,
-                      ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyLarge?.copyWith(color: Colors.white70),
                     ),
                   ],
                 ),

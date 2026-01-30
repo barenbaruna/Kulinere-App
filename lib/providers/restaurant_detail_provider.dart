@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kulinere/data/api/api_service.dart';
 import 'package:kulinere/data/models/customer_review.dart';
-import 'package:kulinere/data/models/restaurant_detail.dart';
 import 'package:kulinere/states/restaurant_detail_state.dart';
 
 class RestaurantDetailProvider extends ChangeNotifier {

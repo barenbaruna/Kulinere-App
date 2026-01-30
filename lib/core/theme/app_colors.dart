@@ -5,6 +5,10 @@ class AppColors {
   static const Color gold = Color(0xFFf3d396);
   static const Color goldDark = Color(0xFFC9A86C);
 
+  // Semantic Gold - Use these for proper visibility
+  /// Gold color that has good contrast based on theme
+  static Color goldVisible(bool isDark) => isDark ? gold : goldDark;
+
   // Light Mode
   static const Color lightBackground = Color(0xFFFFFFFF);
   static const Color lightSurface = Color(0xFFFDF8F0);

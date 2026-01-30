@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kulinere Search (Dark)</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#f3d396",
+                        "background-dark": "#121212",
+                        "surface-dark": "#1E1A14",
+                        "text-light": "#F5F5F5",
+                        "text-muted": "#9CA3AF", 
+                        "border-dark": "#332E26", 
+                    },
+                    fontFamily: {
+                        "display": ["Playfair Display", "serif"],
+                        "body": ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #332E26;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #534b3c;
+        }
+    </style>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-dark min-h-screen text-text-light font-body selection:bg-primary selection:text-surface-dark">
+<div class="relative flex h-full min-h-screen w-full flex-col max-w-md mx-auto overflow-hidden bg-background-dark shadow-2xl border-x border-border-dark">
+<div class="h-11 w-full bg-background-dark flex items-center justify-between px-6 pt-2">
+<span class="text-xs font-medium text-text-light">9:41</span>
+<div class="flex gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-text-light">signal_cellular_alt</span>
+<span class="material-symbols-outlined text-[16px] text-text-light">wifi</span>
+<span class="material-symbols-outlined text-[16px] text-text-light">battery_full</span>
+</div>
+</div>
+<div class="flex items-center p-4 pb-2 justify-between">
+<button class="text-primary flex size-10 shrink-0 items-center justify-center rounded-full active:bg-surface-dark transition-colors">
+<span class="material-symbols-outlined text-[24px]">arrow_back_ios_new</span>
+</button>
+<h2 class="text-text-light text-2xl font-display font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-10">Discover</h2>
+</div>
+<div class="px-4 py-2 sticky top-0 z-10 bg-background-dark">
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-primary/70 group-focus-within:text-primary transition-colors">search</span>
+</div>
+<input class="block w-full rounded-xl border border-transparent focus:border-primary/30 bg-surface-dark py-3.5 pl-12 pr-4 text-text-light placeholder-text-muted focus:ring-1 focus:ring-primary focus:bg-[#26221d] transition-all font-body text-base shadow-inner" placeholder="Search for restaurants, cuisines..." type="text" value="Fine Dining"/>
+</div>
+</div>
+<div class="px-6 py-2">
+<div class="flex items-center justify-between mb-2">
+<p class="text-primary text-xs font-medium tracking-wider uppercase opacity-80">Searching culinary gems...</p>
+<span class="material-symbols-outlined text-primary text-sm animate-spin">progress_activity</span>
+</div>
+<div class="h-0.5 w-full bg-surface-dark rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full w-2/3 shadow-[0_0_8px_rgba(243,211,150,0.6)]"></div>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto px-4 py-2 space-y-4 pb-24">
+<div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+<button class="whitespace-nowrap rounded-full bg-primary text-surface-dark px-4 py-1.5 text-sm font-medium font-body">Top Rated</button>
+<button class="whitespace-nowrap rounded-full bg-surface-dark border border-border-dark text-text-muted px-4 py-1.5 text-sm font-medium font-body hover:text-primary hover:border-primary transition-colors">Nearest</button>
+<button class="whitespace-nowrap rounded-full bg-surface-dark border border-border-dark text-text-muted px-4 py-1.5 text-sm font-medium font-body hover:text-primary hover:border-primary transition-colors">Open Now</button>
+<button class="whitespace-nowrap rounded-full bg-surface-dark border border-border-dark text-text-muted px-4 py-1.5 text-sm font-medium font-body hover:text-primary hover:border-primary transition-colors">Price $$$$</button>
+</div>
+<p class="text-text-muted text-sm px-1 pt-2">3 results found</p>
+<div class="group relative flex flex-col sm:flex-row gap-4 rounded-xl bg-surface-dark p-3 shadow-lg hover:shadow-primary/5 border border-transparent hover:border-primary/20 transition-all cursor-pointer">
+<div class="w-full sm:w-32 h-32 sm:h-auto rounded-lg overflow-hidden shrink-0 relative">
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent sm:hidden"></div>
+<div class="w-full h-full bg-center bg-cover transform group-hover:scale-105 transition-transform duration-500" data-alt="Interior of a luxury french restaurant with warm lighting" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDcZxRMWTpcliVUkcbwe6JiIEwoUFGokEpf2F-lsY7GdB3CuBD6mrmz9QzyObSs22s67G_O4XSjdCOYgB-sKOgWmA6JYLWLdDLyx1gMsayrkw7ic6QzDkZOzZ-L4yeNxt_NCSjWZ40BltKgFR3R_DizYGWuk54QDv6bmdXjiFqcwICyv6DLu2eO9V8vChAcHoVxmvNjxJsRyQXBhqQt9alMMow6C7zjvhhMrhrOpiBn3LofJRN62Efkty9G8cmR3VQ8FTxc4ne9EJk");'>
+</div>
+<div class="absolute top-2 right-2 bg-black/40 backdrop-blur-md rounded-full p-1 sm:hidden">
+<span class="material-symbols-outlined text-white text-xs block">favorite</span>
+</div>
+</div>
+<div class="flex flex-col justify-between flex-1 py-1">
+<div>
+<div class="flex justify-between items-start">
+<h3 class="text-text-light text-xl font-display font-bold leading-tight mb-1">Le Bernadin</h3>
+<span class="material-symbols-outlined text-text-muted hover:text-primary cursor-pointer hidden sm:block">favorite</span>
+</div>
+<p class="text-text-muted text-sm font-body mb-2">French • Midtown • $$$$</p>
+<div class="flex items-center gap-1 mb-3">
+<span class="material-symbols-outlined text-primary text-[18px] fill-current">star</span>
+<span class="text-text-light text-sm font-bold">4.9</span>
+<span class="text-text-muted text-xs">(2,453 reviews)</span>
+</div>
+</div>
+<div class="flex items-center justify-between border-t border-border-dark pt-3 mt-1">
+<div class="flex items-center gap-1.5 text-xs text-text-muted">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span>Opens 5:30 PM</span>
+</div>
+<span class="text-primary text-xs font-semibold px-2 py-1 bg-primary/10 rounded">Michelin 3★</span>
+</div>
+</div>
+</div>
+<div class="group relative flex flex-col sm:flex-row gap-4 rounded-xl bg-surface-dark p-3 shadow-lg hover:shadow-primary/5 border border-transparent hover:border-primary/20 transition-all cursor-pointer">
+<div class="w-full sm:w-32 h-32 sm:h-auto rounded-lg overflow-hidden shrink-0 relative">
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent sm:hidden"></div>
+<div class="w-full h-full bg-center bg-cover transform group-hover:scale-105 transition-transform duration-500" data-alt="Sushi platter presentation in a dark elegant setting" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAgKtbiVLnMFA1gjokoOWEi4Kfw9pXOTceQtQhkxOSmOSezsU1s34CqGv0828sh4IN1VHFaD82MpzyAbcupwYWVIFVSEkPqshjYrtjx6yKMRibKoI6DOCTt3y0boV939vXTBC-AnSxO39DRB2_1TKCVMpa2pm-f5nppcCtXfzpfSfoe6aCGa2mMe3yEDvHD82htMY9bW1ugrndSoHx81b5Klyn4dZNg6gyLl7MQrT1StdDNF_2CSCMxZxuUjV8isQF5hSY53fnungY");'>
+</div>
+</div>
+<div class="flex flex-col justify-between flex-1 py-1">
+<div>
+<div class="flex justify-between items-start">
+<h3 class="text-text-light text-xl font-display font-bold leading-tight mb-1">Nobu Downtown</h3>
+<span class="material-symbols-outlined text-text-muted hover:text-primary cursor-pointer hidden sm:block">favorite</span>
+</div>
+<p class="text-text-muted text-sm font-body mb-2">Japanese • Financial District • $$$</p>
+<div class="flex items-center gap-1 mb-3">
+<span class="material-symbols-outlined text-primary text-[18px] fill-current">star</span>
+<span class="text-text-light text-sm font-bold">4.7</span>
+<span class="text-text-muted text-xs">(1,890 reviews)</span>
+</div>
+</div>
+<div class="flex items-center justify-between border-t border-border-dark pt-3 mt-1">
+<div class="flex items-center gap-1.5 text-xs text-text-muted">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span>Opens 6:00 PM</span>
+</div>
+<span class="text-primary text-xs font-semibold px-2 py-1 bg-primary/10 rounded">Trendy</span>
+</div>
+</div>
+</div>
+<div class="group relative flex flex-col sm:flex-row gap-4 rounded-xl bg-surface-dark p-3 shadow-lg hover:shadow-primary/5 border border-transparent hover:border-primary/20 transition-all cursor-pointer">
+<div class="w-full sm:w-32 h-32 sm:h-auto rounded-lg overflow-hidden shrink-0 relative">
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent sm:hidden"></div>
+<div class="w-full h-full bg-center bg-cover transform group-hover:scale-105 transition-transform duration-500" data-alt="Classic Italian pasta dish with wine glass in background" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuApFkJaDijRLPPhsUHarDIXjWzaVyhyFZgFiuwfpyzbfjKM3n6ppxsFwfgMB-xnHP_bBu_dksQXGLCACyOtAwe2B3jqAWFp_NCfXcgtWRznbcelTDI55A49pvqZDhG4R34IwamMJjust1iR7ghbIBf6B3S-01F3Aw2cI3ZWWLSxhMlKsiZtPXOUNMvZm360Bpw7DtHqUDOTPXEo-awIlne4L2dn0N6Zs1usYNMNd5ecdocrul8mvh8Q6cWxTcjccy60DUCqfx5W3sA");'>
+</div>
+</div>
+<div class="flex flex-col justify-between flex-1 py-1">
+<div>
+<div class="flex justify-between items-start">
+<h3 class="text-text-light text-xl font-display font-bold leading-tight mb-1">Carbone</h3>
+<span class="material-symbols-outlined text-text-muted hover:text-primary cursor-pointer hidden sm:block">favorite</span>
+</div>
+<p class="text-text-muted text-sm font-body mb-2">Italian • Greenwich Village • $$$$</p>
+<div class="flex items-center gap-1 mb-3">
+<span class="material-symbols-outlined text-primary text-[18px] fill-current">star</span>
+<span class="text-text-light text-sm font-bold">4.8</span>
+<span class="text-text-muted text-xs">(3,102 reviews)</span>
+</div>
+</div>
+<div class="flex items-center justify-between border-t border-border-dark pt-3 mt-1">
+<div class="flex items-center gap-1.5 text-xs text-text-muted">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span>Opens 5:00 PM</span>
+</div>
+<span class="text-primary text-xs font-semibold px-2 py-1 bg-primary/10 rounded">Classic</span>
+</div>
+</div>
+</div>
+<div class="h-4 flex items-center justify-center opacity-40">
+<div class="w-1 h-1 bg-primary rounded-full mx-1"></div>
+<div class="w-1 h-1 bg-primary rounded-full mx-1"></div>
+<div class="w-1 h-1 bg-primary rounded-full mx-1"></div>
+</div>
+</div>
+<div class="absolute bottom-6 left-4 right-4 bg-surface-dark/95 backdrop-blur-lg rounded-2xl border border-border-dark shadow-2xl p-2 z-20">
+<div class="flex items-center justify-around w-full">
+<button class="flex flex-col items-center gap-1 p-2 rounded-xl text-text-muted hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[24px]">home</span>
+</button>
+<button class="flex flex-col items-center gap-1 p-2 rounded-xl text-primary bg-primary/10 transition-colors">
+<span class="material-symbols-outlined text-[24px] fill-current">search</span>
+</button>
+<button class="flex flex-col items-center gap-1 p-2 rounded-xl text-text-muted hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[24px]">bookmark</span>
+</button>
+<button class="flex flex-col items-center gap-1 p-2 rounded-xl text-text-muted hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[24px]">person</span>
+</button>
+</div>
+</div>
+</div>
+
+</body></html>

@@ -7,7 +7,7 @@ import 'package:kulinere/providers/navigation_provider.dart';
 import 'package:kulinere/providers/restaurant_detail_provider.dart';
 import 'package:kulinere/providers/restaurant_list_provider.dart';
 import 'package:kulinere/providers/restaurant_search_provider.dart';
-import 'package:kulinere/screens/main/main_screen.dart';
+import 'package:kulinere/screens/splash/splash_screen.dart';
 
 void main() {
   runApp(const KulinereApp());
@@ -39,7 +39,7 @@ class KulinereApp extends StatelessWidget {
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.system,
-        home: const MainScreen(),
+        home: const SplashScreen(),
       ),
     );
   }

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
+/// App-wide color palette following design system.
+///
+/// Contains brand colors, light/dark mode variants, and semantic colors.
 class AppColors {
   // Brand Colors
   static const Color gold = Color(0xFFf3d396);
   static const Color goldDark = Color(0xFFC9A86C);
 
-  // Semantic Gold - Use these for proper visibility
-  /// Gold color that has good contrast based on theme
+  /// Returns gold color with proper contrast for the current theme.
   static Color goldVisible(bool isDark) => isDark ? gold : goldDark;
 
   // Light Mode

@@ -2,6 +2,9 @@ import 'package:kulinere/core/constants/api_constants.dart';
 import 'menu_item.dart';
 import 'customer_review.dart';
 
+/// Detailed restaurant model with full information.
+///
+/// Includes menus, categories, reviews, and copyWith for immutable updates.
 class RestaurantDetail {
   final String id;
   final String name;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// Reusable loading widget with optional message.
 class LoadingWidget extends StatelessWidget {
   final String? message;
 

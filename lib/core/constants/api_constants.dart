@@ -1,3 +1,4 @@
+/// API endpoint constants and image URL builders.
 class ApiConstants {
   static const String baseUrl = 'https://restaurant-api.dicoding.dev';
 

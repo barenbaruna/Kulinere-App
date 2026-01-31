@@ -2,6 +2,7 @@ import 'restaurant.dart';
 import 'restaurant_detail.dart';
 import 'customer_review.dart';
 
+/// Response wrapper for restaurant list API.
 class RestaurantListResponse {
   final bool error;
   final String message;
@@ -27,6 +28,7 @@ class RestaurantListResponse {
   }
 }
 
+/// Response wrapper for restaurant detail API.
 class RestaurantDetailResponse {
   final bool error;
   final String message;
@@ -49,6 +51,7 @@ class RestaurantDetailResponse {
   }
 }
 
+/// Response wrapper for search API.
 class SearchResponse {
   final bool error;
   final int founded;
@@ -71,6 +74,7 @@ class SearchResponse {
   }
 }
 
+/// Response wrapper for review submission API.
 class ReviewResponse {
   final bool error;
   final String message;

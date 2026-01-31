@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
 
-/// Provider untuk mengelola data profil pengguna dan greeting dinamis.
+/// Provider for managing user profile data and dynamic greetings.
 ///
-/// Menggunakan pattern single source of truth untuk nama pengguna
-/// yang di-sync dengan ProfileScreen.
+/// Features:
+/// - Single source of truth for user name
+/// - Time-based dynamic greetings (Indonesian)
+/// - First name extraction for personalized display
 class UserProfileProvider extends ChangeNotifier {
-  // Default name - akan di-sync dengan ProfileScreen
   String _userName = 'Baren Baruna Harahap';
 
+  /// Current user name.
   String get userName => _userName;
 
-  /// Mengambil nama depan untuk greeting
+  /// First name extracted from full name.
   String get firstName => _userName.split(' ').first;
 
+  /// Updates the user name and notifies listeners.
   void setUserName(String name) {
     if (_userName != name) {
       _userName = name;
@@ -20,7 +23,7 @@ class UserProfileProvider extends ChangeNotifier {
     }
   }
 
-  /// Greeting dinamis berdasarkan waktu
+  /// Time-based greeting in Indonesian.
   String get greeting {
     final hour = DateTime.now().hour;
     if (hour < 12) return 'Selamat pagi';
@@ -29,6 +32,6 @@ class UserProfileProvider extends ChangeNotifier {
     return 'Selamat malam';
   }
 
-  /// Full greeting dengan nama
+  /// Full personalized greeting with first name.
   String get fullGreeting => '$greeting, $firstName!';
 }

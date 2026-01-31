@@ -1,3 +1,4 @@
+/// Customer review model from API.
 class CustomerReview {
   final String name;
   final String review;

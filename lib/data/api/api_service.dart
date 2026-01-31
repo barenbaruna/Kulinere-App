@@ -3,7 +3,15 @@ import 'package:http/http.dart' as http;
 import 'package:kulinere/core/constants/api_constants.dart';
 import 'package:kulinere/data/models/api_response.dart';
 
+/// HTTP API service for restaurant data operations.
+///
+/// Provides methods for:
+/// - Fetching restaurant list
+/// - Fetching restaurant details (with cache busting)
+/// - Searching restaurants
+/// - Submitting reviews
 class ApiService {
+  /// Fetches list of all restaurants.
   Future<RestaurantListResponse> getRestaurantList() async {
     final response = await http.get(
       Uri.parse('${ApiConstants.baseUrl}${ApiConstants.listEndpoint}'),
@@ -18,8 +26,8 @@ class ApiService {
     }
   }
 
+  /// Fetches restaurant detail by ID with timestamp to bypass API cache.
   Future<RestaurantDetailResponse> getRestaurantDetail(String id) async {
-    // Add timestamp to bypass API cache
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final response = await http.get(
       Uri.parse(
@@ -36,6 +44,7 @@ class ApiService {
     }
   }
 
+  /// Searches restaurants by query string.
   Future<SearchResponse> searchRestaurants(String query) async {
     final response = await http.get(
       Uri.parse(
@@ -52,6 +61,7 @@ class ApiService {
     }
   }
 
+  /// Submits a customer review for a restaurant.
   Future<ReviewResponse> addReview({
     required String id,
     required String name,

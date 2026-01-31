@@ -1,5 +1,8 @@
 import 'package:kulinere/core/constants/api_constants.dart';
 
+/// Restaurant model for list display.
+///
+/// Contains basic info with computed image URL getters.
 class Restaurant {
   final String id;
   final String name;

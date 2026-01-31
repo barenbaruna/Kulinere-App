@@ -3,6 +3,12 @@ import 'package:provider/provider.dart';
 import 'package:kulinere/core/theme/app_colors.dart';
 import 'package:kulinere/providers/restaurant_detail_provider.dart';
 
+/// Review submission form with validation and loading state.
+///
+/// Features:
+/// - Name and review text fields with validation
+/// - Loading indicator during submission
+/// - Success/error snackbar feedback
 class ReviewForm extends StatefulWidget {
   final String restaurantId;
   final VoidCallback? onSubmitted;
@@ -69,9 +75,7 @@ class _ReviewFormState extends State<ReviewForm> {
         );
       }
     } finally {
-      if (mounted) {
-        setState(() => _isSubmitting = false);
-      }
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
@@ -96,175 +100,196 @@ class _ReviewFormState extends State<ReviewForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header Row
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: goldColor.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    Icons.edit_note_rounded,
-                    color: goldColor,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Tulis Review',
-                        style: TextStyle(
-                          fontFamily: 'PlayfairDisplay',
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: isDark
-                              ? AppColors.darkTextPrimary
-                              : AppColors.lightTextPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Bagikan pengalaman Anda',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isDark
-                              ? AppColors.darkTextSecondary
-                              : AppColors.lightTextSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+            _buildHeader(isDark, goldColor),
             const SizedBox(height: 24),
+            _buildNameField(isDark, goldColor, dividerColor, fillColor),
+            const SizedBox(height: 16),
+            _buildReviewField(isDark, goldColor, dividerColor, fillColor),
+            const SizedBox(height: 24),
+            _buildSubmitButton(),
+          ],
+        ),
+      ),
+    );
+  }
 
-            // Name Field
-            TextFormField(
-              controller: _nameController,
-              decoration: InputDecoration(
-                labelText: 'Nama Anda',
-                labelStyle: TextStyle(
+  Widget _buildHeader(bool isDark, Color goldColor) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: goldColor.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(Icons.edit_note_rounded, color: goldColor, size: 22),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Tulis Review',
+                style: TextStyle(
+                  fontFamily: 'PlayfairDisplay',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: isDark
+                      ? AppColors.darkTextPrimary
+                      : AppColors.lightTextPrimary,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Bagikan pengalaman Anda',
+                style: TextStyle(
+                  fontSize: 12,
                   color: isDark
                       ? AppColors.darkTextSecondary
                       : AppColors.lightTextSecondary,
                 ),
-                filled: true,
-                fillColor: fillColor,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: dividerColor),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: dividerColor),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: goldColor, width: 2),
-                ),
-                errorBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.error),
-                ),
-                focusedErrorBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.error, width: 2),
-                ),
-                prefixIcon: Icon(
-                  Icons.person_outline_rounded,
-                  color: goldColor,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 16,
-                ),
               ),
-              textInputAction: TextInputAction.next,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Nama wajib diisi';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 
-            // Review Field
-            TextFormField(
-              controller: _reviewController,
-              decoration: InputDecoration(
-                hintText: 'Ceritakan pengalaman Anda di restoran ini...',
-                hintStyle: TextStyle(
-                  color: isDark
-                      ? AppColors.darkTextSecondary.withOpacity(0.6)
-                      : AppColors.lightTextSecondary.withOpacity(0.6),
-                ),
-                filled: true,
-                fillColor: fillColor,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: dividerColor),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: dividerColor),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: goldColor, width: 2),
-                ),
-                errorBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.error),
-                ),
-                focusedErrorBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.error, width: 2),
-                ),
-                contentPadding: const EdgeInsets.all(16),
-              ),
-              maxLines: 4,
-              textInputAction: TextInputAction.done,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Review wajib diisi';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 24),
+  Widget _buildNameField(
+    bool isDark,
+    Color goldColor,
+    Color dividerColor,
+    Color fillColor,
+  ) {
+    return TextFormField(
+      controller: _nameController,
+      decoration: _inputDecoration(
+        labelText: 'Nama Anda',
+        prefixIcon: Icons.person_outline_rounded,
+        isDark: isDark,
+        goldColor: goldColor,
+        dividerColor: dividerColor,
+        fillColor: fillColor,
+      ),
+      textInputAction: TextInputAction.next,
+      validator: (value) =>
+          (value == null || value.trim().isEmpty) ? 'Nama wajib diisi' : null,
+    );
+  }
 
-            // Submit Button
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: _isSubmitting ? null : _submitReview,
-                icon: _isSubmitting
-                    ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.send_rounded, size: 18),
-                label: Text(_isSubmitting ? 'Mengirim...' : 'Kirim Review'),
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+  Widget _buildReviewField(
+    bool isDark,
+    Color goldColor,
+    Color dividerColor,
+    Color fillColor,
+  ) {
+    return TextFormField(
+      controller: _reviewController,
+      decoration: InputDecoration(
+        hintText: 'Ceritakan pengalaman Anda di restoran ini...',
+        hintStyle: TextStyle(
+          color:
+              (isDark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.lightTextSecondary)
+                  .withOpacity(0.6),
+        ),
+        filled: true,
+        fillColor: fillColor,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: dividerColor),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: dividerColor),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: goldColor, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.error),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.error, width: 2),
+        ),
+        contentPadding: const EdgeInsets.all(16),
+      ),
+      maxLines: 4,
+      textInputAction: TextInputAction.done,
+      validator: (value) =>
+          (value == null || value.trim().isEmpty) ? 'Review wajib diisi' : null,
+    );
+  }
+
+  InputDecoration _inputDecoration({
+    required String labelText,
+    required IconData prefixIcon,
+    required bool isDark,
+    required Color goldColor,
+    required Color dividerColor,
+    required Color fillColor,
+  }) {
+    return InputDecoration(
+      labelText: labelText,
+      labelStyle: TextStyle(
+        color: isDark
+            ? AppColors.darkTextSecondary
+            : AppColors.lightTextSecondary,
+      ),
+      filled: true,
+      fillColor: fillColor,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: dividerColor),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: dividerColor),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: goldColor, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: AppColors.error),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: AppColors.error, width: 2),
+      ),
+      prefixIcon: Icon(prefixIcon, color: goldColor),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: FilledButton.icon(
+        onPressed: _isSubmitting ? null : _submitReview,
+        icon: _isSubmitting
+            ? const SizedBox(
+                height: 18,
+                width: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
                 ),
-              ),
-            ),
-          ],
+              )
+            : const Icon(Icons.send_rounded, size: 18),
+        label: Text(_isSubmitting ? 'Mengirim...' : 'Kirim Review'),
+        style: FilledButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       ),
     );

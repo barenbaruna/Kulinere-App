@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+/// Reusable error widget with retry button.
+///
+/// Displays error icon, message, and retry action.
 class AppErrorWidget extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;

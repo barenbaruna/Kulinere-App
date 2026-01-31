@@ -8,6 +8,12 @@ import 'package:kulinere/screens/detail/detail_screen.dart';
 import 'package:kulinere/screens/home/widgets/restaurant_card.dart';
 import 'package:kulinere/states/restaurant_list_state.dart';
 
+/// Bookmark screen displaying user's saved restaurants.
+///
+/// Features:
+/// - Swipe-to-dismiss for removing bookmarks
+/// - Empty state when no bookmarks exist
+/// - Syncs with [BookmarkProvider] for persistence
 class BookmarkScreen extends StatelessWidget {
   const BookmarkScreen({super.key});
 
@@ -20,61 +26,64 @@ class BookmarkScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Custom Header - matching Home & Search style
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              child: Text(
-                'Favorit',
-                style: TextStyle(
-                  fontFamily: 'PlayfairDisplay',
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.goldVisible(isDark),
-                ),
-              ),
-            ),
-            // Content
-            Expanded(
-              child: Consumer2<BookmarkProvider, RestaurantListProvider>(
-                builder: (context, bookmarkProvider, listProvider, child) {
-                  final bookmarkedIds = bookmarkProvider.bookmarkedIds;
-
-                  if (bookmarkedIds.isEmpty) {
-                    return _buildEmptyState(context);
-                  }
-
-                  final listState = listProvider.state;
-                  if (listState is! RestaurantListLoadedState) {
-                    return _buildEmptyState(context);
-                  }
-
-                  final bookmarkedRestaurants = listState.data
-                      .where((r) => bookmarkedIds.contains(r.id))
-                      .toList();
-
-                  if (bookmarkedRestaurants.isEmpty) {
-                    return _buildEmptyState(context);
-                  }
-
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount: bookmarkedRestaurants.length,
-                    itemBuilder: (context, index) {
-                      final restaurant = bookmarkedRestaurants[index];
-                      return _BookmarkCard(
-                        restaurant: restaurant,
-                        onTap: () => _navigateToDetail(context, restaurant.id),
-                        onRemove: () =>
-                            bookmarkProvider.removeBookmark(restaurant.id),
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
+            _buildHeader(isDark),
+            Expanded(child: _buildContent(context)),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildHeader(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: Text(
+        'Favorit',
+        style: TextStyle(
+          fontFamily: 'PlayfairDisplay',
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: AppColors.goldVisible(isDark),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
+    return Consumer2<BookmarkProvider, RestaurantListProvider>(
+      builder: (context, bookmarkProvider, listProvider, child) {
+        final bookmarkedIds = bookmarkProvider.bookmarkedIds;
+
+        if (bookmarkedIds.isEmpty) {
+          return _buildEmptyState(context);
+        }
+
+        final listState = listProvider.state;
+        if (listState is! RestaurantListLoadedState) {
+          return _buildEmptyState(context);
+        }
+
+        final bookmarkedRestaurants = listState.data
+            .where((r) => bookmarkedIds.contains(r.id))
+            .toList();
+
+        if (bookmarkedRestaurants.isEmpty) {
+          return _buildEmptyState(context);
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          itemCount: bookmarkedRestaurants.length,
+          itemBuilder: (context, index) {
+            final restaurant = bookmarkedRestaurants[index];
+            return _BookmarkCard(
+              restaurant: restaurant,
+              onTap: () => _navigateToDetail(context, restaurant.id),
+              onRemove: () => bookmarkProvider.removeBookmark(restaurant.id),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -115,6 +124,7 @@ class BookmarkScreen extends StatelessWidget {
   }
 }
 
+/// Dismissible bookmark card with swipe-to-remove functionality.
 class _BookmarkCard extends StatelessWidget {
   final Restaurant restaurant;
   final VoidCallback onTap;

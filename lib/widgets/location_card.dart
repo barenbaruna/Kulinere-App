@@ -35,9 +35,9 @@ class LocationCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? Color.fromRGBO(
-                  goldColor.red,
-                  goldColor.green,
-                  goldColor.blue,
+                  (goldColor.r * 255).round(),
+                  (goldColor.g * 255).round(),
+                  (goldColor.b * 255).round(),
                   0.15,
                 )
               : (isDark ? AppColors.darkSurface : AppColors.lightSurface),

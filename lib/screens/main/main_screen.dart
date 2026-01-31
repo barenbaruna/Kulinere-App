@@ -8,6 +8,10 @@ import 'package:kulinere/screens/home/home_screen.dart';
 import 'package:kulinere/screens/profile/profile_screen.dart';
 import 'package:kulinere/screens/search/search_screen.dart';
 
+/// Main screen with bottom navigation and IndexedStack for tab persistence.
+///
+/// Uses [NavigationProvider] for tab state management.
+/// Status bar styling adapts to current theme mode.
 class MainScreen extends StatelessWidget {
   const MainScreen({super.key});
 
@@ -37,71 +41,69 @@ class MainScreen extends StatelessWidget {
               index: navProvider.currentIndex,
               children: _screens,
             ),
-            bottomNavigationBar: Container(
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    color: isDark
-                        ? AppColors.darkDivider
-                        : AppColors.lightDivider,
-                    width: 0.5,
-                  ),
-                ),
-              ),
-              child: NavigationBar(
-                selectedIndex: navProvider.currentIndex,
-                onDestinationSelected: (index) => navProvider.setIndex(index),
-                indicatorColor: AppColors.gold.withOpacity(0.2),
-                backgroundColor: isDark
-                    ? AppColors.darkBackground
-                    : AppColors.lightBackground,
-                destinations: [
-                  NavigationDestination(
-                    icon: Icon(
-                      Icons.home_outlined,
-                      color: isDark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.lightTextSecondary,
-                    ),
-                    selectedIcon: Icon(Icons.home, color: AppColors.gold),
-                    label: 'Beranda',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(
-                      Icons.search_outlined,
-                      color: isDark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.lightTextSecondary,
-                    ),
-                    selectedIcon: Icon(Icons.search, color: AppColors.gold),
-                    label: 'Jelajahi',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(
-                      Icons.bookmark_outline,
-                      color: isDark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.lightTextSecondary,
-                    ),
-                    selectedIcon: Icon(Icons.bookmark, color: AppColors.gold),
-                    label: 'Favorit',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(
-                      Icons.person_outline,
-                      color: isDark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.lightTextSecondary,
-                    ),
-                    selectedIcon: Icon(Icons.person, color: AppColors.gold),
-                    label: 'Profil',
-                  ),
-                ],
-              ),
-            ),
+            bottomNavigationBar: _buildBottomNav(context, navProvider, isDark),
           );
         },
       ),
+    );
+  }
+
+  Widget _buildBottomNav(
+    BuildContext context,
+    NavigationProvider navProvider,
+    bool isDark,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(
+            color: isDark ? AppColors.darkDivider : AppColors.lightDivider,
+            width: 0.5,
+          ),
+        ),
+      ),
+      child: NavigationBar(
+        selectedIndex: navProvider.currentIndex,
+        onDestinationSelected: (index) => navProvider.setIndex(index),
+        indicatorColor: AppColors.gold.withOpacity(0.2),
+        backgroundColor: isDark
+            ? AppColors.darkBackground
+            : AppColors.lightBackground,
+        destinations: [
+          _buildNavItem(Icons.home_outlined, Icons.home, 'Beranda', isDark),
+          _buildNavItem(
+            Icons.search_outlined,
+            Icons.search,
+            'Jelajahi',
+            isDark,
+          ),
+          _buildNavItem(
+            Icons.bookmark_outline,
+            Icons.bookmark,
+            'Favorit',
+            isDark,
+          ),
+          _buildNavItem(Icons.person_outline, Icons.person, 'Profil', isDark),
+        ],
+      ),
+    );
+  }
+
+  NavigationDestination _buildNavItem(
+    IconData icon,
+    IconData selectedIcon,
+    String label,
+    bool isDark,
+  ) {
+    return NavigationDestination(
+      icon: Icon(
+        icon,
+        color: isDark
+            ? AppColors.darkTextSecondary
+            : AppColors.lightTextSecondary,
+      ),
+      selectedIcon: Icon(selectedIcon, color: AppColors.gold),
+      label: label,
     );
   }
 }

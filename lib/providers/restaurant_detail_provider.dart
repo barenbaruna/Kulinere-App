@@ -3,6 +3,9 @@ import 'package:kulinere/data/api/api_service.dart';
 import 'package:kulinere/data/models/customer_review.dart';
 import 'package:kulinere/states/restaurant_detail_state.dart';
 
+/// Manages restaurant detail fetching and review submission.
+///
+/// Uses sealed class state pattern with optimistic updates for reviews.
 class RestaurantDetailProvider extends ChangeNotifier {
   final ApiService _apiService;
 
@@ -30,10 +33,8 @@ class RestaurantDetailProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> addReview({
-    required String name,
-    required String review,
-  }) async {
+  /// Adds a new review and updates state with API response.
+  Future<void> addReview({required String name, required String review}) async {
     if (_currentRestaurantId == null) return;
 
     final currentState = _state;
@@ -46,7 +47,9 @@ class RestaurantDetailProvider extends ChangeNotifier {
         review: review,
       );
 
-      final updatedReviews = List<CustomerReview>.from(response.customerReviews);
+      final updatedReviews = List<CustomerReview>.from(
+        response.customerReviews,
+      );
       final updatedDetail = currentState.data.copyWith(
         customerReviews: updatedReviews,
       );

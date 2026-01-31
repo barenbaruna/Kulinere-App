@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+/// App typography configuration using Google Fonts.
+///
+/// Uses PlayfairDisplay for display/headline text and Inter for body text.
+/// Colors are passed dynamically to support light/dark themes.
 class AppTypography {
+  /// Generates TextTheme with specified primary and secondary colors.
   static TextTheme textTheme(Color primaryColor, Color secondaryColor) {
     return TextTheme(
       displayLarge: GoogleFonts.playfairDisplay(

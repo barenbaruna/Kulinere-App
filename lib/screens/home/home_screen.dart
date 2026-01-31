@@ -13,6 +13,13 @@ import 'package:kulinere/widgets/loading_widget.dart';
 import 'package:kulinere/widgets/location_card.dart';
 import 'package:kulinere/widgets/profile_avatar.dart';
 
+/// Home screen displaying restaurant list with city filtering.
+///
+/// Features:
+/// - Dynamic greeting based on time of day
+/// - Horizontal scrollable city filter cards
+/// - Pull-to-refresh restaurant list
+/// - Search bar navigation to Jelajahi tab
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -55,14 +62,12 @@ class _HomeScreenState extends State<HomeScreen> {
     RestaurantListProvider provider,
     bool isDark,
   ) {
-    // Calculate unique cities and counts
     final cityMap = <String, int>{};
     for (final r in restaurants) {
       cityMap[r.city] = (cityMap[r.city] ?? 0) + 1;
     }
     final uniqueCities = cityMap.keys.toList();
 
-    // Filter restaurants by selected city
     final displayedRestaurants = _selectedCity == null
         ? restaurants
         : restaurants.where((r) => r.city == _selectedCity).toList();
@@ -73,13 +78,9 @@ class _HomeScreenState extends State<HomeScreen> {
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
-          // Header
           SliverToBoxAdapter(child: _buildHeader(context, isDark)),
-          // Greeting
           SliverToBoxAdapter(child: _buildGreeting(context, isDark)),
-          // Search Bar
           SliverToBoxAdapter(child: _buildSearchBar(context, isDark)),
-          // Location Cards Section
           SliverToBoxAdapter(
             child: _buildLocationSection(
               context,
@@ -88,7 +89,6 @@ class _HomeScreenState extends State<HomeScreen> {
               cityMap,
             ),
           ),
-          // Restaurant Count Header
           SliverToBoxAdapter(
             child: _buildRestaurantCountHeader(
               context,
@@ -96,7 +96,6 @@ class _HomeScreenState extends State<HomeScreen> {
               displayedRestaurants.length,
             ),
           ),
-          // Restaurant List
           displayedRestaurants.isEmpty
               ? SliverFillRemaining(child: _buildEmptyState(context))
               : SliverPadding(
@@ -123,7 +122,6 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          // Notification Icon
           IconButton(
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -163,7 +161,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          // App Title - Centered with Expanded
           Expanded(
             child: Text(
               'Kulinere',
@@ -176,7 +173,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-          // Profile Avatar - using reusable widget
           ProfileAvatar(
             size: 36,
             onTap: () => context.read<NavigationProvider>().setIndex(3),
@@ -214,7 +210,6 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: GestureDetector(
         onTap: () {
-          // Navigate to search tab with focus signal
           context.read<NavigationProvider>().setIndex(1, focusSearch: true);
         },
         child: Container(
@@ -229,11 +224,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(
             children: [
               const SizedBox(width: 16),
-              Icon(
-                Icons.search,
-                color: goldColor, // Gold for consistency
-                size: 20,
-              ),
+              Icon(Icons.search, color: goldColor, size: 20),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -266,7 +257,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section Header
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
@@ -283,7 +273,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-              // Reset button when filter is active
               if (_selectedCity != null)
                 TextButton.icon(
                   onPressed: () => setState(() => _selectedCity = null),
@@ -302,7 +291,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        // Horizontal Scroll Location Cards
         SizedBox(
           height: 100,
           child: ListView.separated(

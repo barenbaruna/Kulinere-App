@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:kulinere/data/api/api_service.dart';
 import 'package:kulinere/states/restaurant_search_state.dart';
 
+/// Manages restaurant search with query state tracking.
+///
+/// Uses sealed class state pattern. Tracks last query for retry.
 class RestaurantSearchProvider extends ChangeNotifier {
   final ApiService _apiService;
 

@@ -1,3 +1,4 @@
+/// Single menu item (food or drink).
 class MenuItem {
   final String name;
 
@@ -8,6 +9,7 @@ class MenuItem {
   }
 }
 
+/// Container for food and drink menus.
 class Menus {
   final List<MenuItem> foods;
   final List<MenuItem> drinks;
@@ -26,6 +28,7 @@ class Menus {
   }
 }
 
+/// Restaurant category tag.
 class Category {
   final String name;
 

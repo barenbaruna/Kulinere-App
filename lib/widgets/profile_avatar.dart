@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:kulinere/core/theme/app_colors.dart';
 
-/// Reusable profile avatar widget used in HomeScreen and ProfileScreen.
+/// Reusable profile avatar widget with gold ring styling.
 ///
-/// Follows DRY principle - single source of truth for avatar styling.
-/// Design system compliant: gold ring, surface background.
+/// Features:
+/// - Configurable size with proportional border width
+/// - Optional tap callback for navigation
+/// - Fallback to initials when image unavailable
+/// - Design system compliant (gold ring, surface background)
 class ProfileAvatar extends StatelessWidget {
-  /// Size of the avatar (diameter)
   final double size;
-
-  /// Optional callback when avatar is tapped
   final VoidCallback? onTap;
-
-  /// Whether to show the profile image or just initials
   final bool showImage;
+
+  static const String _profileImagePath = 'images/profile_photo.jpg';
 
   const ProfileAvatar({
     super.key,
@@ -21,9 +21,6 @@ class ProfileAvatar extends StatelessWidget {
     this.onTap,
     this.showImage = true,
   });
-
-  // Profile image path - single source of truth
-  static const String profileImagePath = 'images/profile_photo.jpg';
 
   @override
   Widget build(BuildContext context) {
@@ -39,36 +36,33 @@ class ProfileAvatar extends StatelessWidget {
       ),
       child: ClipOval(
         child: showImage
-            ? Image.asset(
-                profileImagePath,
-                width: size,
-                height: size,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  // Fallback to initials if image not found
-                  return _buildInitialsAvatar(context, isDark, goldColor);
-                },
-              )
-            : _buildInitialsAvatar(context, isDark, goldColor),
+            ? _buildImageAvatar(isDark, goldColor)
+            : _buildInitialsAvatar(isDark, goldColor),
       ),
     );
 
-    if (onTap != null) {
-      return GestureDetector(onTap: onTap, child: avatar);
-    }
-    return avatar;
+    return onTap != null
+        ? GestureDetector(onTap: onTap, child: avatar)
+        : avatar;
   }
 
-  Widget _buildInitialsAvatar(
-    BuildContext context,
-    bool isDark,
-    Color goldColor,
-  ) {
+  Widget _buildImageAvatar(bool isDark, Color goldColor) {
+    return Image.asset(
+      _profileImagePath,
+      width: size,
+      height: size,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) =>
+          _buildInitialsAvatar(isDark, goldColor),
+    );
+  }
+
+  Widget _buildInitialsAvatar(bool isDark, Color goldColor) {
     return CircleAvatar(
       radius: size / 2,
       backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
       child: Text(
-        'B', // Default initial
+        'B',
         style: TextStyle(
           fontSize: size * 0.4,
           fontWeight: FontWeight.bold,

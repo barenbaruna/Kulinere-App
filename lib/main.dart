@@ -14,6 +14,12 @@ void main() {
   runApp(const KulinereApp());
 }
 
+/// Root application widget with provider configuration.
+///
+/// Sets up:
+/// - MultiProvider with all app providers
+/// - Material theme (light/dark based on system)
+/// - SplashScreen as initial route
 class KulinereApp extends StatelessWidget {
   const KulinereApp({super.key});
 

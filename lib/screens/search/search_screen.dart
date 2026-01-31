@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:kulinere/core/theme/app_colors.dart';
 import 'package:kulinere/core/utils/debouncer.dart';
 import 'package:kulinere/data/models/restaurant.dart';
+import 'package:kulinere/providers/navigation_provider.dart';
 import 'package:kulinere/providers/restaurant_search_provider.dart';
 import 'package:kulinere/screens/detail/detail_screen.dart';
 import 'package:kulinere/screens/home/widgets/restaurant_card.dart';
@@ -28,6 +29,24 @@ class _SearchScreenState extends State<SearchScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _checkFocusSignal();
+  }
+
+  void _checkFocusSignal() {
+    final navProvider = context.read<NavigationProvider>();
+    if (navProvider.shouldFocusSearch) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _focusNode.requestFocus();
+        }
+      });
+      navProvider.clearSearchFocus();
+    }
   }
 
   @override
@@ -61,166 +80,181 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Text(
-                'Jelajahi',
-                style: TextStyle(
-                  fontFamily: 'PlayfairDisplay',
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.goldVisible(isDark),
-                ),
-              ),
-            ),
-            // Search Bar
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Container(
-                height: 48,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkSurface
-                      : AppColors.lightSurface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.darkDivider
-                        : AppColors.lightDivider,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const SizedBox(width: 16),
-                    Icon(
-                      Icons.search,
+    // Listen to focus signal using Consumer
+    return Consumer<NavigationProvider>(
+      builder: (context, navProvider, child) {
+        // Check and handle focus signal
+        if (navProvider.shouldFocusSearch) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _focusNode.requestFocus();
+            }
+          });
+          navProvider.clearSearchFocus();
+        }
+
+        return Scaffold(
+          body: SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: Text(
+                    'Jelajahi',
+                    style: TextStyle(
+                      fontFamily: 'PlayfairDisplay',
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
                       color: AppColors.goldVisible(isDark),
-                      size: 20,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextField(
-                        controller: _controller,
-                        focusNode: _focusNode,
-                        textAlignVertical: TextAlignVertical.center,
-                        decoration: InputDecoration(
-                          hintText: 'Cari restoran, kota, atau makanan...',
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: EdgeInsets.zero,
-                          hintStyle: TextStyle(
-                            color: isDark
-                                ? AppColors.darkTextSecondary
-                                : AppColors.lightTextSecondary,
-                            fontSize: 14,
-                          ),
-                        ),
-                        style: Theme.of(context).textTheme.bodyLarge,
-                        onChanged: _onSearchChanged,
-                      ),
-                    ),
-                    if (_controller.text.isNotEmpty)
-                      IconButton(
-                        icon: Icon(
-                          Icons.clear,
-                          color: isDark
-                              ? AppColors.darkTextSecondary
-                              : AppColors.lightTextSecondary,
-                        ),
-                        onPressed: _clearSearch,
-                      ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-            // Filter Chips
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  _FilterChip(
-                    label: 'Semua',
-                    isSelected: _sortBy == 'default',
-                    onTap: () => setState(() => _sortBy = 'default'),
-                  ),
-                  const SizedBox(width: 8),
-                  _FilterChip(
-                    label: 'Rating Tertinggi',
-                    isSelected: _sortBy == 'rating',
-                    icon: Icons.star,
-                    onTap: () => setState(() => _sortBy = 'rating'),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            // Results
-            Expanded(
-              child: Consumer<RestaurantSearchProvider>(
-                builder: (context, provider, child) {
-                  final state = provider.state;
-
-                  if (state is RestaurantSearchNoneState) {
-                    return _buildEmptyHint(context, isDark);
-                  }
-
-                  if (state is RestaurantSearchLoadingState) {
-                    return _buildLoadingState(context, isDark);
-                  }
-
-                  if (state is RestaurantSearchErrorState) {
-                    return AppErrorWidget(
-                      message: state.error,
-                      onRetry: () =>
-                          provider.searchRestaurants(provider.lastQuery),
-                    );
-                  }
-
-                  if (state is RestaurantSearchLoadedState) {
-                    if (state.data.isEmpty) {
-                      return _buildNoResults(
-                        context,
-                        provider.lastQuery,
-                        isDark,
-                      );
-                    }
-
-                    final sortedResults = _sortResults(state.data);
-                    return ListView.builder(
-                      padding: const EdgeInsets.only(top: 8, bottom: 100),
-                      itemCount: sortedResults.length,
-                      itemBuilder: (context, index) {
-                        final restaurant = sortedResults[index];
-                        return RestaurantCard(
-                          restaurant: restaurant,
-                          heroTagPrefix: 'search',
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => DetailScreen(
-                                restaurantId: restaurant.id,
-                                heroTagPrefix: 'search',
+                // Search Bar
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.darkSurface
+                          : AppColors.lightSurface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isDark
+                            ? AppColors.darkDivider
+                            : AppColors.lightDivider,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 16),
+                        Icon(
+                          Icons.search,
+                          color: AppColors.goldVisible(isDark),
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextField(
+                            controller: _controller,
+                            focusNode: _focusNode,
+                            textAlignVertical: TextAlignVertical.center,
+                            decoration: InputDecoration(
+                              hintText: 'Cari restoran, kota, atau makanan...',
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                              hintStyle: TextStyle(
+                                color: isDark
+                                    ? AppColors.darkTextSecondary
+                                    : AppColors.lightTextSecondary,
+                                fontSize: 14,
                               ),
                             ),
+                            style: Theme.of(context).textTheme.bodyLarge,
+                            onChanged: _onSearchChanged,
                           ),
-                        );
-                      },
-                    );
-                  }
+                        ),
+                        if (_controller.text.isNotEmpty)
+                          IconButton(
+                            icon: Icon(
+                              Icons.clear,
+                              color: isDark
+                                  ? AppColors.darkTextSecondary
+                                  : AppColors.lightTextSecondary,
+                            ),
+                            onPressed: _clearSearch,
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Filter Chips
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      _FilterChip(
+                        label: 'Semua',
+                        isSelected: _sortBy == 'default',
+                        onTap: () => setState(() => _sortBy = 'default'),
+                      ),
+                      const SizedBox(width: 8),
+                      _FilterChip(
+                        label: 'Rating Tertinggi',
+                        isSelected: _sortBy == 'rating',
+                        icon: Icons.star,
+                        onTap: () => setState(() => _sortBy = 'rating'),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Results
+                Expanded(
+                  child: Consumer<RestaurantSearchProvider>(
+                    builder: (context, provider, child) {
+                      final state = provider.state;
 
-                  return const SizedBox();
-                },
-              ),
+                      if (state is RestaurantSearchNoneState) {
+                        return _buildEmptyHint(context, isDark);
+                      }
+
+                      if (state is RestaurantSearchLoadingState) {
+                        return _buildLoadingState(context, isDark);
+                      }
+
+                      if (state is RestaurantSearchErrorState) {
+                        return AppErrorWidget(
+                          message: state.error,
+                          onRetry: () =>
+                              provider.searchRestaurants(provider.lastQuery),
+                        );
+                      }
+
+                      if (state is RestaurantSearchLoadedState) {
+                        if (state.data.isEmpty) {
+                          return _buildNoResults(
+                            context,
+                            provider.lastQuery,
+                            isDark,
+                          );
+                        }
+
+                        final sortedResults = _sortResults(state.data);
+                        return ListView.builder(
+                          padding: const EdgeInsets.only(top: 8, bottom: 100),
+                          itemCount: sortedResults.length,
+                          itemBuilder: (context, index) {
+                            final restaurant = sortedResults[index];
+                            return RestaurantCard(
+                              restaurant: restaurant,
+                              heroTagPrefix: 'search',
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => DetailScreen(
+                                    restaurantId: restaurant.id,
+                                    heroTagPrefix: 'search',
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      }
+
+                      return const SizedBox();
+                    },
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

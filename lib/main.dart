@@ -7,6 +7,7 @@ import 'package:kulinere/providers/navigation_provider.dart';
 import 'package:kulinere/providers/restaurant_detail_provider.dart';
 import 'package:kulinere/providers/restaurant_list_provider.dart';
 import 'package:kulinere/providers/restaurant_search_provider.dart';
+import 'package:kulinere/providers/user_profile_provider.dart';
 import 'package:kulinere/screens/splash/splash_screen.dart';
 
 void main() {
@@ -32,6 +33,7 @@ class KulinereApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(create: (_) => BookmarkProvider()),
         ChangeNotifierProvider(create: (_) => NavigationProvider()),
+        ChangeNotifierProvider(create: (_) => UserProfileProvider()),
       ],
       child: MaterialApp(
         title: 'Kulinere',

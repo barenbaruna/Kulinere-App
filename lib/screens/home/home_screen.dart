@@ -1,16 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:kulinere/core/theme/app_colors.dart';
+import 'package:kulinere/data/models/restaurant.dart';
 import 'package:kulinere/providers/navigation_provider.dart';
 import 'package:kulinere/providers/restaurant_list_provider.dart';
+import 'package:kulinere/providers/user_profile_provider.dart';
 import 'package:kulinere/screens/detail/detail_screen.dart';
 import 'package:kulinere/screens/home/widgets/restaurant_card.dart';
 import 'package:kulinere/states/restaurant_list_state.dart';
 import 'package:kulinere/widgets/error_widget.dart';
 import 'package:kulinere/widgets/loading_widget.dart';
+import 'package:kulinere/widgets/location_card.dart';
+import 'package:kulinere/widgets/profile_avatar.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String? _selectedCity;
 
   @override
   Widget build(BuildContext context) {
@@ -18,78 +29,100 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          children: [
-            // Custom Header
-            _buildHeader(context, isDark),
-            // Search Bar
-            _buildSearchBar(context, isDark),
-            // Restaurant List
-            Expanded(
-              child: Consumer<RestaurantListProvider>(
-                builder: (context, provider, child) {
-                  return switch (provider.state) {
-                    RestaurantListNoneState() => const SizedBox(),
-                    RestaurantListLoadingState() => const LoadingWidget(
-                      message: 'Memuat daftar restoran...',
-                    ),
-                    RestaurantListLoadedState(data: final restaurants) =>
-                      restaurants.isEmpty
-                          ? _buildEmptyState(context)
-                          : RefreshIndicator(
-                              onRefresh: () => provider.fetchRestaurantList(),
-                              color: AppColors.gold,
-                              child: ListView.builder(
-                                padding: const EdgeInsets.only(
-                                  top: 8,
-                                  bottom: 100,
-                                ),
-                                itemCount: restaurants.length,
-                                itemBuilder: (context, index) {
-                                  final restaurant = restaurants[index];
-                                  return RestaurantCard(
-                                    restaurant: restaurant,
-                                    onTap: () => _navigateToDetail(
-                                      context,
-                                      restaurant.id,
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                    RestaurantListErrorState(error: final message) =>
-                      AppErrorWidget(
-                        message: message,
-                        onRetry: () => provider.fetchRestaurantList(),
-                      ),
-                  };
-                },
+        child: Consumer<RestaurantListProvider>(
+          builder: (context, provider, child) {
+            return switch (provider.state) {
+              RestaurantListNoneState() => const SizedBox(),
+              RestaurantListLoadingState() => const LoadingWidget(
+                message: 'Memuat daftar restoran...',
               ),
-            ),
-          ],
+              RestaurantListLoadedState(data: final restaurants) =>
+                _buildContent(context, restaurants, provider, isDark),
+              RestaurantListErrorState(error: final message) => AppErrorWidget(
+                message: message,
+                onRetry: () => provider.fetchRestaurantList(),
+              ),
+            };
+          },
         ),
       ),
     );
   }
 
+  Widget _buildContent(
+    BuildContext context,
+    List<Restaurant> restaurants,
+    RestaurantListProvider provider,
+    bool isDark,
+  ) {
+    // Calculate unique cities and counts
+    final cityMap = <String, int>{};
+    for (final r in restaurants) {
+      cityMap[r.city] = (cityMap[r.city] ?? 0) + 1;
+    }
+    final uniqueCities = cityMap.keys.toList();
+
+    // Filter restaurants by selected city
+    final displayedRestaurants = _selectedCity == null
+        ? restaurants
+        : restaurants.where((r) => r.city == _selectedCity).toList();
+
+    return RefreshIndicator(
+      onRefresh: () => provider.fetchRestaurantList(),
+      color: AppColors.goldVisible(isDark),
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          // Header
+          SliverToBoxAdapter(child: _buildHeader(context, isDark)),
+          // Greeting
+          SliverToBoxAdapter(child: _buildGreeting(context, isDark)),
+          // Search Bar
+          SliverToBoxAdapter(child: _buildSearchBar(context, isDark)),
+          // Location Cards Section
+          SliverToBoxAdapter(
+            child: _buildLocationSection(
+              context,
+              isDark,
+              uniqueCities,
+              cityMap,
+            ),
+          ),
+          // Restaurant Count Header
+          SliverToBoxAdapter(
+            child: _buildRestaurantCountHeader(
+              context,
+              isDark,
+              displayedRestaurants.length,
+            ),
+          ),
+          // Restaurant List
+          displayedRestaurants.isEmpty
+              ? SliverFillRemaining(child: _buildEmptyState(context))
+              : SliverPadding(
+                  padding: const EdgeInsets.only(bottom: 100),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final restaurant = displayedRestaurants[index];
+                      return RestaurantCard(
+                        restaurant: restaurant,
+                        onTap: () => _navigateToDetail(context, restaurant.id),
+                      );
+                    }, childCount: displayedRestaurants.length),
+                  ),
+                ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildHeader(BuildContext context, bool isDark) {
+    final goldColor = AppColors.goldVisible(isDark);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Empty space for balance
-          const SizedBox(width: 40),
-          // App Title
-          Text(
-            'Kulinere',
-            style: TextStyle(
-              fontFamily: 'PlayfairDisplay',
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: AppColors.goldVisible(isDark),
-            ),
-          ),
           // Notification Icon
           IconButton(
             onPressed: () {
@@ -116,7 +149,7 @@ class HomeScreen extends StatelessWidget {
                     width: 8,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: AppColors.gold,
+                      color: goldColor,
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: isDark
@@ -130,18 +163,59 @@ class HomeScreen extends StatelessWidget {
               ],
             ),
           ),
+          // App Title - Centered with Expanded
+          Expanded(
+            child: Text(
+              'Kulinere',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'PlayfairDisplay',
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: goldColor,
+              ),
+            ),
+          ),
+          // Profile Avatar - using reusable widget
+          ProfileAvatar(
+            size: 36,
+            onTap: () => context.read<NavigationProvider>().setIndex(3),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildSearchBar(BuildContext context, bool isDark) {
+  Widget _buildGreeting(BuildContext context, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Consumer<UserProfileProvider>(
+        builder: (context, userProvider, child) {
+          return Text(
+            userProvider.fullGreeting,
+            style: TextStyle(
+              fontFamily: 'PlayfairDisplay',
+              fontSize: 22,
+              fontWeight: FontWeight.w600,
+              color: isDark
+                  ? AppColors.darkTextPrimary
+                  : AppColors.lightTextPrimary,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSearchBar(BuildContext context, bool isDark) {
+    final goldColor = AppColors.goldVisible(isDark);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: GestureDetector(
         onTap: () {
-          // Navigate to Search screen (tab index 1)
-          context.read<NavigationProvider>().setIndex(1);
+          // Navigate to search tab with focus signal
+          context.read<NavigationProvider>().setIndex(1, focusSearch: true);
         },
         child: Container(
           height: 48,
@@ -157,24 +231,137 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(width: 16),
               Icon(
                 Icons.search,
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.lightTextSecondary,
+                color: goldColor, // Gold for consistency
                 size: 20,
               ),
               const SizedBox(width: 12),
-              Text(
-                'Cari restoran atau lokasi...',
-                style: TextStyle(
-                  color: isDark
-                      ? AppColors.darkTextSecondary
-                      : AppColors.lightTextSecondary,
-                  fontSize: 14,
+              Expanded(
+                child: Text(
+                  'Cari restoran atau lokasi...',
+                  style: TextStyle(
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.lightTextSecondary,
+                    fontSize: 14,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 16),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildLocationSection(
+    BuildContext context,
+    bool isDark,
+    List<String> cities,
+    Map<String, int> cityMap,
+  ) {
+    final goldColor = AppColors.goldVisible(isDark);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section Header
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Jelajahi ${cities.length} kota kuliner',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.lightTextSecondary,
+                  ),
+                ),
+              ),
+              // Reset button when filter is active
+              if (_selectedCity != null)
+                TextButton.icon(
+                  onPressed: () => setState(() => _selectedCity = null),
+                  icon: Icon(Icons.clear, size: 16, color: goldColor),
+                  label: Text(
+                    'Semua',
+                    style: TextStyle(color: goldColor, fontSize: 12),
+                  ),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        // Horizontal Scroll Location Cards
+        SizedBox(
+          height: 100,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: cities.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final city = cities[index];
+              return LocationCard(
+                city: city,
+                restaurantCount: cityMap[city] ?? 0,
+                isSelected: _selectedCity == city,
+                onTap: () {
+                  setState(() {
+                    _selectedCity = _selectedCity == city ? null : city;
+                  });
+                },
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _buildRestaurantCountHeader(
+    BuildContext context,
+    bool isDark,
+    int count,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          Icon(
+            Icons.restaurant_menu,
+            size: 18,
+            color: AppColors.goldVisible(isDark),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              _selectedCity != null
+                  ? '$count pilihan kuliner di $_selectedCity'
+                  : '$count pilihan kuliner menanti',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.lightTextSecondary,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -194,6 +381,13 @@ class HomeScreen extends StatelessWidget {
             'Tidak ada restoran',
             style: Theme.of(context).textTheme.titleLarge,
           ),
+          if (_selectedCity != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              'di $_selectedCity',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
         ],
       ),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:kulinere/core/theme/app_colors.dart';
+import 'package:kulinere/widgets/profile_avatar.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -153,13 +154,8 @@ class ProfileScreen extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  CircleAvatar(
-                    radius: 46,
-                    backgroundColor: AppColors.goldVisible(
-                      isDark,
-                    ).withOpacity(0.2),
-                    backgroundImage: const AssetImage('images/profile_photo.jpg'),
-                  ),
+                  // Using reusable ProfileAvatar widget
+                  const ProfileAvatar(size: 92),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(

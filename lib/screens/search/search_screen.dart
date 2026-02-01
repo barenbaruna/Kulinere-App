@@ -10,11 +10,12 @@ import 'package:kulinere/screens/home/widgets/restaurant_card.dart';
 import 'package:kulinere/states/restaurant_search_state.dart';
 import 'package:kulinere/widgets/error_widget.dart';
 
-/// Search screen with debounced search and sorting functionality.
+/// Search screen with debounced search, sorting, and city filtering.
 ///
 /// Features:
 /// - Real-time search with 300ms debounce
 /// - Sort by default or rating
+/// - Filter by city
 /// - Auto-focus when navigating from home search bar
 /// - CustomScrollView + Slivers for overflow prevention
 class SearchScreen extends StatefulWidget {
@@ -29,6 +30,7 @@ class _SearchScreenState extends State<SearchScreen> {
   final _debouncer = Debouncer();
   final _focusNode = FocusNode();
   String _sortBy = 'default';
+  String? _selectedCity;
 
   @override
   void initState() {
@@ -63,6 +65,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _onSearchChanged(String query) {
+    setState(() => _selectedCity = null);
     _debouncer.run(() {
       context.read<RestaurantSearchProvider>().searchRestaurants(query);
     });
@@ -70,15 +73,31 @@ class _SearchScreenState extends State<SearchScreen> {
 
   void _clearSearch() {
     _controller.clear();
+    setState(() => _selectedCity = null);
     context.read<RestaurantSearchProvider>().reset();
     _focusNode.requestFocus();
   }
 
-  List<Restaurant> _sortResults(List<Restaurant> restaurants) {
-    if (_sortBy == 'rating') {
-      return [...restaurants]..sort((a, b) => b.rating.compareTo(a.rating));
+  List<Restaurant> _filterAndSort(List<Restaurant> restaurants) {
+    var filtered = restaurants;
+
+    if (_selectedCity != null) {
+      filtered = filtered.where((r) => r.city == _selectedCity).toList();
     }
-    return restaurants;
+
+    if (_sortBy == 'rating') {
+      filtered = [...filtered]..sort((a, b) => b.rating.compareTo(a.rating));
+    }
+
+    return filtered;
+  }
+
+  List<String> _extractUniqueCities(List<Restaurant> restaurants) {
+    final cities = <String>{};
+    for (final r in restaurants) {
+      cities.add(r.city);
+    }
+    return cities.toList()..sort();
   }
 
   @override
@@ -99,12 +118,19 @@ class _SearchScreenState extends State<SearchScreen> {
           body: SafeArea(
             child: Consumer<RestaurantSearchProvider>(
               builder: (context, provider, child) {
+                final state = provider.state;
+                final cities = state is RestaurantSearchLoadedState
+                    ? _extractUniqueCities(state.data)
+                    : <String>[];
+
                 return CustomScrollView(
                   slivers: [
                     SliverToBoxAdapter(child: _buildHeader(isDark)),
                     SliverToBoxAdapter(child: _buildSearchBar(isDark)),
-                    SliverToBoxAdapter(child: _buildFilterChips(isDark)),
-                    _buildResultCountSliver(provider.state, isDark),
+                    SliverToBoxAdapter(
+                      child: _buildFilterChips(isDark, cities),
+                    ),
+                    _buildResultCountSliver(state, isDark),
                     _buildResultsSliver(provider, isDark),
                   ],
                 );
@@ -185,23 +211,36 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildFilterChips(bool isDark) {
-    return Padding(
+  Widget _buildFilterChips(bool isDark, List<String> cities) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
           _FilterChip(
             label: 'Semua',
-            isSelected: _sortBy == 'default',
-            onTap: () => setState(() => _sortBy = 'default'),
+            isSelected: _sortBy == 'default' && _selectedCity == null,
+            onTap: () => setState(() {
+              _sortBy = 'default';
+              _selectedCity = null;
+            }),
           ),
           const SizedBox(width: 8),
           _FilterChip(
-            label: 'Rating Tertinggi',
+            label: 'Rating',
             isSelected: _sortBy == 'rating',
             icon: Icons.star,
             onTap: () => setState(() => _sortBy = 'rating'),
           ),
+          if (cities.length > 1) ...[
+            const SizedBox(width: 8),
+            _CityFilterChip(
+              selectedCity: _selectedCity,
+              cities: cities,
+              onCitySelected: (city) => setState(() => _selectedCity = city),
+              onClearFilter: () => setState(() => _selectedCity = null),
+            ),
+          ],
         ],
       ),
     );
@@ -209,11 +248,14 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget _buildResultCountSliver(RestaurantSearchState state, bool isDark) {
     if (state is RestaurantSearchLoadedState && state.data.isNotEmpty) {
+      final filtered = _filterAndSort(state.data);
+      final cityLabel = _selectedCity != null ? ' di $_selectedCity' : '';
+
       return SliverToBoxAdapter(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: Text(
-            '${state.founded} restoran ditemukan',
+            '${filtered.length} restoran ditemukan$cityLabel',
             style: TextStyle(
               fontSize: 13,
               color: isDark
@@ -262,14 +304,22 @@ class _SearchScreenState extends State<SearchScreen> {
         );
       }
 
-      final sortedResults = _sortResults(state.data);
+      final filteredResults = _filterAndSort(state.data);
+
+      if (filteredResults.isEmpty) {
+        return SliverFillRemaining(
+          hasScrollBody: false,
+          child: _buildNoResultsForCity(isDark),
+        );
+      }
+
       return SliverList.builder(
-        itemCount: sortedResults.length,
+        itemCount: filteredResults.length,
         itemBuilder: (context, index) {
-          final restaurant = sortedResults[index];
+          final restaurant = filteredResults[index];
           return Padding(
             padding: EdgeInsets.only(
-              bottom: index == sortedResults.length - 1 ? 100 : 0,
+              bottom: index == filteredResults.length - 1 ? 100 : 0,
             ),
             child: RestaurantCard(
               restaurant: restaurant,
@@ -385,6 +435,41 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
     );
   }
+
+  Widget _buildNoResultsForCity(bool isDark) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.location_off,
+            size: 64,
+            color: AppColors.gold.withOpacity(0.3),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Tidak ada di $_selectedCity',
+            style: TextStyle(
+              fontFamily: 'PlayfairDisplay',
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: isDark
+                  ? AppColors.darkTextPrimary
+                  : AppColors.lightTextPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: () => setState(() => _selectedCity = null),
+            child: Text(
+              'Hapus filter kota',
+              style: TextStyle(color: AppColors.goldVisible(isDark)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// Filter chip widget for sort options.
@@ -446,6 +531,133 @@ class _FilterChip extends StatelessWidget {
                           ? AppColors.darkTextPrimary
                           : AppColors.lightTextPrimary),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// City filter chip with dropdown menu.
+class _CityFilterChip extends StatelessWidget {
+  final String? selectedCity;
+  final List<String> cities;
+  final ValueChanged<String> onCitySelected;
+  final VoidCallback onClearFilter;
+
+  const _CityFilterChip({
+    required this.selectedCity,
+    required this.cities,
+    required this.onCitySelected,
+    required this.onClearFilter,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isSelected = selectedCity != null;
+
+    return PopupMenuButton<String>(
+      onSelected: (value) {
+        if (value == '__clear__') {
+          onClearFilter();
+        } else {
+          onCitySelected(value);
+        }
+      },
+      offset: const Offset(0, 40),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: isDark ? AppColors.darkSurface : AppColors.lightBackground,
+      itemBuilder: (context) => [
+        if (selectedCity != null)
+          PopupMenuItem<String>(
+            value: '__clear__',
+            child: Row(
+              children: [
+                Icon(Icons.clear, size: 16, color: AppColors.error),
+                const SizedBox(width: 8),
+                const Text('Hapus filter'),
+              ],
+            ),
+          ),
+        ...cities.map(
+          (city) => PopupMenuItem<String>(
+            value: city,
+            child: Row(
+              children: [
+                Icon(
+                  selectedCity == city
+                      ? Icons.check_circle
+                      : Icons.location_city,
+                  size: 16,
+                  color: selectedCity == city
+                      ? AppColors.gold
+                      : (isDark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.lightTextSecondary),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  city,
+                  style: TextStyle(
+                    fontWeight: selectedCity == city
+                        ? FontWeight.w600
+                        : FontWeight.normal,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.gold.withOpacity(0.2)
+              : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.gold
+                : (isDark ? AppColors.darkDivider : AppColors.lightDivider),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.location_on,
+              size: 14,
+              color: isSelected
+                  ? AppColors.gold
+                  : (isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.lightTextSecondary),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              selectedCity ?? 'Kota',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                color: isSelected
+                    ? AppColors.gold
+                    : (isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.lightTextPrimary),
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.arrow_drop_down,
+              size: 16,
+              color: isSelected
+                  ? AppColors.gold
+                  : (isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.lightTextSecondary),
             ),
           ],
         ),

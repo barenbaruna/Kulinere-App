@@ -16,6 +16,7 @@ import 'package:kulinere/widgets/error_widget.dart';
 /// - Real-time search with 300ms debounce
 /// - Sort by default or rating
 /// - Auto-focus when navigating from home search bar
+/// - CustomScrollView + Slivers for overflow prevention
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
 
@@ -94,16 +95,20 @@ class _SearchScreenState extends State<SearchScreen> {
         }
 
         return Scaffold(
+          resizeToAvoidBottomInset: true,
           body: SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(isDark),
-                _buildSearchBar(isDark),
-                _buildFilterChips(isDark),
-                const SizedBox(height: 12),
-                Expanded(child: _buildResults(isDark)),
-              ],
+            child: Consumer<RestaurantSearchProvider>(
+              builder: (context, provider, child) {
+                return CustomScrollView(
+                  slivers: [
+                    SliverToBoxAdapter(child: _buildHeader(isDark)),
+                    SliverToBoxAdapter(child: _buildSearchBar(isDark)),
+                    SliverToBoxAdapter(child: _buildFilterChips(isDark)),
+                    _buildResultCountSliver(provider.state, isDark),
+                    _buildResultsSliver(provider, isDark),
+                  ],
+                );
+              },
             ),
           ),
         );
@@ -202,87 +207,110 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildResults(bool isDark) {
-    return Consumer<RestaurantSearchProvider>(
-      builder: (context, provider, child) {
-        final state = provider.state;
-
-        if (state is RestaurantSearchNoneState) {
-          return _buildEmptyHint(isDark);
-        }
-        if (state is RestaurantSearchLoadingState) {
-          return _buildLoadingState(isDark);
-        }
-        if (state is RestaurantSearchErrorState) {
-          return AppErrorWidget(
-            message: state.error,
-            onRetry: () => provider.searchRestaurants(provider.lastQuery),
-          );
-        }
-        if (state is RestaurantSearchLoadedState) {
-          if (state.data.isEmpty) {
-            return _buildNoResults(provider.lastQuery, isDark);
-          }
-          final sortedResults = _sortResults(state.data);
-          return ListView.builder(
-            padding: const EdgeInsets.only(top: 8, bottom: 100),
-            itemCount: sortedResults.length,
-            itemBuilder: (context, index) {
-              final restaurant = sortedResults[index];
-              return RestaurantCard(
-                restaurant: restaurant,
-                heroTagPrefix: 'search',
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => DetailScreen(
-                      restaurantId: restaurant.id,
-                      heroTagPrefix: 'search',
-                    ),
-                  ),
-                ),
-              );
-            },
-          );
-        }
-        return const SizedBox();
-      },
-    );
-  }
-
-  Widget _buildLoadingState(bool isDark) {
-    return Column(
-      children: [
-        LinearProgressIndicator(
-          backgroundColor: isDark
-              ? AppColors.darkDivider
-              : AppColors.lightDivider,
-          color: AppColors.gold,
-        ),
-        Expanded(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.search,
-                  size: 48,
-                  color: AppColors.gold.withOpacity(0.5),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Mencari restoran...',
-                  style: TextStyle(
-                    color: isDark
-                        ? AppColors.darkTextSecondary
-                        : AppColors.lightTextSecondary,
-                  ),
-                ),
-              ],
+  Widget _buildResultCountSliver(RestaurantSearchState state, bool isDark) {
+    if (state is RestaurantSearchLoadedState && state.data.isNotEmpty) {
+      return SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Text(
+            '${state.founded} restoran ditemukan',
+            style: TextStyle(
+              fontSize: 13,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.lightTextSecondary,
             ),
           ),
         ),
-      ],
+      );
+    }
+    return const SliverToBoxAdapter(child: SizedBox(height: 12));
+  }
+
+  Widget _buildResultsSliver(RestaurantSearchProvider provider, bool isDark) {
+    final state = provider.state;
+
+    if (state is RestaurantSearchNoneState) {
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: _buildEmptyHint(isDark),
+      );
+    }
+
+    if (state is RestaurantSearchLoadingState) {
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: _buildLoadingState(isDark),
+      );
+    }
+
+    if (state is RestaurantSearchErrorState) {
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: AppErrorWidget(
+          message: state.error,
+          onRetry: () => provider.searchRestaurants(provider.lastQuery),
+        ),
+      );
+    }
+
+    if (state is RestaurantSearchLoadedState) {
+      if (state.data.isEmpty) {
+        return SliverFillRemaining(
+          hasScrollBody: false,
+          child: _buildNoResults(provider.lastQuery, isDark),
+        );
+      }
+
+      final sortedResults = _sortResults(state.data);
+      return SliverList.builder(
+        itemCount: sortedResults.length,
+        itemBuilder: (context, index) {
+          final restaurant = sortedResults[index];
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: index == sortedResults.length - 1 ? 100 : 0,
+            ),
+            child: RestaurantCard(
+              restaurant: restaurant,
+              heroTagPrefix: 'search',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DetailScreen(
+                    restaurantId: restaurant.id,
+                    heroTagPrefix: 'search',
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    }
+
+    return const SliverToBoxAdapter(child: SizedBox());
+  }
+
+  Widget _buildLoadingState(bool isDark) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation(AppColors.goldVisible(isDark)),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Mencari restoran...',
+            style: TextStyle(
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.lightTextSecondary,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

@@ -63,6 +63,7 @@ class MainScreen extends StatelessWidget {
         ),
       ),
       child: NavigationBar(
+        height: 60,
         selectedIndex: navProvider.currentIndex,
         onDestinationSelected: (index) => navProvider.setIndex(index),
         indicatorColor: AppColors.gold.withOpacity(0.2),

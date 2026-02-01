@@ -115,19 +115,32 @@ class _SplashScreenState extends State<SplashScreen>
           ),
         ),
         child: SafeArea(
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildAnimatedLogo(logoSize),
-                const SizedBox(height: 32),
-                _buildAnimatedAppName(isDark),
-                const SizedBox(height: 8),
-                _buildAnimatedTagline(isDark),
-                const SizedBox(height: 60),
-                _buildLoadingIndicator(isDark),
-              ],
-            ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isLandscape = constraints.maxWidth > constraints.maxHeight;
+              final spacing = isLandscape ? 16.0 : 32.0;
+              final bottomSpacing = isLandscape ? 24.0 : 60.0;
+
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildAnimatedLogo(logoSize),
+                        SizedBox(height: spacing),
+                        _buildAnimatedAppName(isDark),
+                        const SizedBox(height: 8),
+                        _buildAnimatedTagline(isDark),
+                        SizedBox(height: bottomSpacing),
+                        _buildLoadingIndicator(isDark),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ),

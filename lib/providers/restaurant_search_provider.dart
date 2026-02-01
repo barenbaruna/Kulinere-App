@@ -30,7 +30,10 @@ class RestaurantSearchProvider extends ChangeNotifier {
 
     try {
       final response = await _apiService.searchRestaurants(query);
-      _state = RestaurantSearchLoadedState(response.restaurants);
+      _state = RestaurantSearchLoadedState(
+        response.restaurants,
+        founded: response.founded,
+      );
     } catch (e) {
       _state = RestaurantSearchErrorState(
         e.toString().replaceFirst('Exception: ', ''),

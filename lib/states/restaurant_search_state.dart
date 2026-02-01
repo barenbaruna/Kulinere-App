@@ -14,7 +14,8 @@ class RestaurantSearchLoadingState extends RestaurantSearchState {}
 /// Success state with search results.
 class RestaurantSearchLoadedState extends RestaurantSearchState {
   final List<Restaurant> data;
-  RestaurantSearchLoadedState(this.data);
+  final int founded;
+  RestaurantSearchLoadedState(this.data, {required this.founded});
 }
 
 /// Error state with error message.

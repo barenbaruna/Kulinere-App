@@ -4,9 +4,12 @@ import 'package:kulinere/core/theme/app_colors.dart';
 import 'package:kulinere/data/models/restaurant.dart';
 import 'package:kulinere/providers/navigation_provider.dart';
 import 'package:kulinere/providers/restaurant_list_provider.dart';
+import 'package:kulinere/providers/settings_provider.dart';
+
 import 'package:kulinere/providers/user_profile_provider.dart';
 import 'package:kulinere/screens/detail/detail_screen.dart';
 import 'package:kulinere/screens/home/widgets/restaurant_card.dart';
+
 import 'package:kulinere/states/restaurant_list_state.dart';
 import 'package:kulinere/widgets/error_widget.dart';
 import 'package:kulinere/widgets/loading_widget.dart';
@@ -121,10 +124,11 @@ class HomeScreen extends StatelessWidget {
         children: [
           IconButton(
             onPressed: () {
+              // Notification Status Check
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  duration: Duration(milliseconds: 800),
-                  content: Text('Notifikasi dalam pengembangan'),
+                  content: Text('Tidak ada notifikasi baru'),
+                  duration: Duration(seconds: 1),
                 ),
               );
             },
@@ -140,24 +144,32 @@ class HomeScreen extends StatelessWidget {
                 Positioned(
                   top: 2,
                   right: 2,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: goldColor,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isDark
-                            ? AppColors.darkBackground
-                            : AppColors.lightBackground,
-                        width: 1,
-                      ),
-                    ),
+                  child: Consumer<SettingsProvider>(
+                    builder: (context, settings, child) {
+                      if (!settings.dailyReminderEnabled)
+                        return const SizedBox.shrink();
+                      // Green dot if reminders are ON
+                      return Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: AppColors.success,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDark
+                                ? AppColors.darkBackground
+                                : AppColors.lightBackground,
+                            width: 1,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],
             ),
           ),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               'Kulinere',

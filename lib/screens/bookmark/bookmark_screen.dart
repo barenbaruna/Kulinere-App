@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:kulinere/core/theme/app_colors.dart';
 import 'package:kulinere/data/models/restaurant.dart';
-import 'package:kulinere/providers/bookmark_provider.dart';
-import 'package:kulinere/providers/restaurant_list_provider.dart';
+import 'package:kulinere/providers/favorites_provider.dart';
 import 'package:kulinere/screens/detail/detail_screen.dart';
 import 'package:kulinere/screens/home/widgets/restaurant_card.dart';
-import 'package:kulinere/states/restaurant_list_state.dart';
 
 /// Bookmark screen displaying user's saved restaurants.
 ///
@@ -14,6 +12,7 @@ import 'package:kulinere/states/restaurant_list_state.dart';
 /// - CustomScrollView + Slivers for overflow prevention
 /// - Swipe-to-dismiss for removing bookmarks
 /// - Empty state when no bookmarks exist
+/// - SQLite-backed persistence via FavoritesProvider
 class BookmarkScreen extends StatelessWidget {
   const BookmarkScreen({super.key});
 
@@ -23,22 +22,18 @@ class BookmarkScreen extends StatelessWidget {
 
     return Scaffold(
       body: SafeArea(
-        child: Consumer2<BookmarkProvider, RestaurantListProvider>(
-          builder: (context, bookmarkProvider, listProvider, child) {
-            final bookmarkedIds = bookmarkProvider.bookmarkedIds;
-            final listState = listProvider.state;
+        child: Consumer<FavoritesProvider>(
+          builder: (context, favoritesProvider, child) {
+            final favorites = favoritesProvider.favorites;
 
-            List<Restaurant> bookmarkedRestaurants = [];
-            if (listState is RestaurantListLoadedState) {
-              bookmarkedRestaurants = listState.data
-                  .where((r) => bookmarkedIds.contains(r.id))
-                  .toList();
+            if (favoritesProvider.isLoading) {
+              return const Center(child: CircularProgressIndicator());
             }
 
             return CustomScrollView(
               slivers: [
                 SliverToBoxAdapter(child: _buildHeader(isDark)),
-                if (bookmarkedIds.isEmpty || bookmarkedRestaurants.isEmpty) ...[
+                if (favorites.isEmpty) ...[
                   SliverFillRemaining(
                     hasScrollBody: false,
                     child: _buildEmptyState(context),
@@ -48,7 +43,7 @@ class BookmarkScreen extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                       child: Text(
-                        '${bookmarkedRestaurants.length} restoran tersimpan',
+                        '${favorites.length} restoran tersimpan',
                         style: TextStyle(
                           fontSize: 13,
                           color: isDark
@@ -59,21 +54,19 @@ class BookmarkScreen extends StatelessWidget {
                     ),
                   ),
                   SliverList.builder(
-                    itemCount: bookmarkedRestaurants.length,
+                    itemCount: favorites.length,
                     itemBuilder: (context, index) {
-                      final restaurant = bookmarkedRestaurants[index];
+                      final restaurant = favorites[index];
                       return Padding(
                         padding: EdgeInsets.only(
-                          bottom: index == bookmarkedRestaurants.length - 1
-                              ? 100
-                              : 0,
+                          bottom: index == favorites.length - 1 ? 100 : 0,
                         ),
                         child: _BookmarkCard(
                           restaurant: restaurant,
                           onTap: () =>
                               _navigateToDetail(context, restaurant.id),
                           onRemove: () =>
-                              bookmarkProvider.removeBookmark(restaurant.id),
+                              favoritesProvider.removeFavorite(restaurant.id),
                         ),
                       );
                     },
@@ -110,7 +103,7 @@ class BookmarkScreen extends StatelessWidget {
           Icon(
             Icons.bookmark_outline,
             size: 64,
-            color: AppColors.gold.withOpacity(0.5),
+            color: AppColors.gold.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
@@ -119,7 +112,7 @@ class BookmarkScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Tap ikon bookmark di halaman detail\nuntuk menambahkan ke favorit',
+            'Tap ikon hati di halaman detail\nuntuk menambahkan ke favorit',
             style: Theme.of(context).textTheme.bodyMedium,
             textAlign: TextAlign.center,
           ),

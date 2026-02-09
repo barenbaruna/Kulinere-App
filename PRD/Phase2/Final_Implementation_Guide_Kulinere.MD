@@ -1204,45 +1204,17 @@ dev_dependencies:
 
 ---
 
-## Critical Analysis (Multi-Framework Thinking)
+## Critical Analysis Summary
 
-### 1. Design Thinking Analysis
+> [!NOTE]
+> See **Phase 1 → Phase 2 Alignment Verification** section below for detailed multi-framework analysis.
 
-| Phase | Consideration | Risk Mitigation |
-|-------|---------------|-----------------|
-| **Empathize** | Users want quick access to favorites and personalized reminders | Favorites tab in bottom nav, notification with restaurant name |
-| **Define** | Data must persist across app restarts | SQLite for favorites, SharedPreferences for settings |
-| **Ideate** | Multiple ways to add favorites (detail, list) | Heart icon on both screens, consistent UX |
-| **Prototype** | UI mockups validated | ASCII mockups in guide match PRD reference |
-| **Test** | 6+ test cases covering core features | Unit (3), Widget (2), Integration (1) |
-
-### 2. First Principle Thinking
-
-| Core Requirement | First Principle | Implementation |
-|------------------|-----------------|----------------|
-| **Favorites Persistence** | Data must survive app restart → Local database | SQLite with `sqflite` |
-| **Theme Persistence** | Simple key-value → Lightweight storage | `shared_preferences` |
-| **Daily Reminder** | Exact time scheduling → System alarm APIs | `flutter_local_notifications` with `zonedSchedule` |
-| **No Duplicates** | Unique identifier constraint | `PRIMARY KEY` + `ConflictAlgorithm.replace` |
-
-### 3. Second-Order Thinking (Consequences)
-
-| First-Order Effect | Second-Order Effect | Third-Order Effect |
-|--------------------|--------------------|--------------------|
-| Add SQLite dependency | App size increases ~500KB | Acceptable for persistence benefit |
-| Schedule exact alarm | Battery consumption | Use `AndroidScheduleMode.exactAllowWhileIdle` |
-| Request notification permission | User may deny | Graceful fallback, don't break app |
-| Fetch random restaurant for notification | Network call in background | Cache restaurants locally as fallback |
-
-### 4. Probabilistic Thinking (Risk Assessment)
-
-| Scenario | Probability | Impact | Mitigation |
-|----------|-------------|--------|------------|
-| User denies notification permission | 30% | Low (toggle just doesn't work) | Show explanation dialog first |
-| Database migration needed in future | 20% | Medium | Keep schema simple, version = 1 |
-| API fails during background fetch | 15% | Low | Use cached restaurant list |
-| Android kills background task | 40% | Medium | Use `workmanager` for reliable scheduling |
-| Overflow on long restaurant names | 10% | High (rejection) | Always use `maxLines` + `overflow` |
+| Framework | Key Insight |
+|-----------|-------------|
+| **Design Thinking** | All user journeys preserved + 3 new features |
+| **First Principle** | Same patterns: Provider DI, sealed states, modular folders |
+| **Second-Order** | 1 migration (BookmarkProvider → SQLite) + graceful fallbacks |
+| **Probabilistic** | 95% compatible, 10% regression risk → mitigate with tests |
 
 ---
 
@@ -1257,78 +1229,6 @@ dev_dependencies:
 | **Settings Toggle** | Material SwitchListTile | ⚠️ Style with gold accent |
 | **Favorite Icon** | Heart (♡/♥) in gold | ⚠️ Use AppColors.gold |
 | **Empty State** | Centered text + icon | ⚠️ Add to FavoritesScreen |
-
----
-
-## Final Implementation Prompt
-
-Use this prompt to guide AI-assisted implementation:
-
----
-
-```
-# Kulinere Phase 2 Implementation Request
-
-## Context
-I have a Flutter restaurant app "Kulinere" built with Provider state management. 
-The app currently has: restaurant list, detail, search, review, and light/dark theme.
-
-## Reference Documents
-- PRD/Phase2/Final_Implementation_Guide_Kulinere.MD (complete implementation guide)
-- PRD/Phase2/next_product_requirement.MD (requirements)
-- PRD/Phase1/design_system.MD (colors, typography, spacing)
-
-## Tasks to Implement
-
-### 1. SQLite Favorites (Priority: P0)
-- Create `FavoritesDatabaseService` in `lib/core/database/`
-- Create `FavoritesProvider` in `lib/providers/`
-- Update `BookmarkScreen` to use SQLite data
-- Add favorite button (heart icon) on `DetailScreen`
-- Ensure: no duplicates, instant refresh, navigation to detail works
-
-### 2. Theme & Reminder Persistence (Priority: P0)
-- Create `PreferencesService` in `lib/core/preferences/`
-- Create `SettingsProvider` with theme mode and reminder toggle
-- Create `SettingsScreen` with toggle switches
-- Load preferences in `main()` before `runApp()`
-- Wire `MaterialApp.themeMode` to `SettingsProvider`
-
-### 3. Daily Reminder Notification (Priority: P1)
-- Configure Android: desugaring, permissions, receivers
-- Create `NotificationService` in `lib/core/notifications/`
-- Schedule at 11:00 AM daily
-- Cancel when toggle is OFF
-- BONUS: Include random restaurant name in notification body
-
-### 4. Testing (Priority: P0)
-- Create 6+ test cases in `test/` folder
-- Include: unit tests (3), widget tests (2), integration test (1)
-- Use mocktail for mocking database and API services
-- Ensure test names are descriptive
-
-## Constraints
-- MUST use Provider (no setState for state management)
-- MUST follow design_system.MD colors and typography
-- MUST prevent UI overflow (use Expanded, Flexible, maxLines)
-- MUST NOT break existing Phase 1 features
-- MUST format code with `dart format`
-
-## Forbidden Actions (Will Cause Rejection)
-- Using in-memory storage instead of SQLite for favorites
-- Toggle values not persisting after app restart
-- Duplicate items in favorites list
-- Test descriptions that don't describe the feature
-- Files in wrong location (test files must be in `test/`)
-
-## Expected Output
-After implementation, the app should:
-1. Persist favorites in SQLite (survives app restart)
-2. Persist theme and reminder settings in SharedPreferences
-3. Show daily notification at 11:00 AM when enabled
-4. Pass all 6+ test cases
-5. Follow Kulinere design system (gold accent, Playfair Display)
-```
 
 ---
 

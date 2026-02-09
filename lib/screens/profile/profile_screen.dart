@@ -1,38 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:kulinere/core/theme/app_colors.dart';
+import 'package:kulinere/screens/profile/widgets/app_settings_sheet.dart';
 import 'package:kulinere/widgets/profile_avatar.dart';
 
-/// Developer profile screen displaying personal information.
+/// Unified Profile Screen with "Menu-Based" Design.
 ///
-/// Shows name, role, bio, skills, and contact links.
-/// Uses reusable [ProfileAvatar] widget for consistency with HomeScreen.
+/// Highlights User Identity first, then provides clean access to Settings & Info via menu.
+/// Avoids clutter by using a Modal Bottom Sheet for settings.
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   static const String _name = 'Baren Baruna Harahap';
   static const String _role = 'Junior Mobile & AI Engineer';
-  static const String _location = 'Indonesia';
-  static const String _bio =
-      'Curious tentang Mobile Development dengan background AI, ML, dan Deep Learning. '
-      'Ikut IDCamp 2025 untuk mendalami integrasi AI di mobile app. '
-      'Suka ngulik open-source project, antusias dengan mobile app, machine learning, dan computer vision.';
+  static const String _email = 'barenbarunaharahap@gmail.com';
 
-  static const Map<String, String> _links = {
-    'GitHub': 'https://github.com/barenbaruna',
-    'LinkedIn': 'https://www.linkedin.com/in/barenbarunaharahap',
-    'Email': 'mailto:barenbarunaharahap@gmail.com',
-    'Scholar': 'https://scholar.google.com/citations?user=4vwtBgoAAAAJ&hl=en',
-  };
+  // Developer Info (Hidden by default, shown in "Tentang" or separate view if needed)
+  static const String _bio =
+      'Mobile Development enthusiast with AI/ML background. '
+      'Building smart, user-centric apps with Flutter & Swift.';
 
   static const List<String> _skills = [
     'Flutter',
     'Dart',
-    'Machine Learning',
-    'Computer Vision',
+    'AI/ML',
     'Swift',
     'UI/UX',
   ];
+
+  static const Map<String, String> _links = {
+    'GitHub': 'https://github.com/barenbaruna',
+    'LinkedIn': 'https://www.linkedin.com/in/barenbarunaharahap',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -40,39 +39,9 @@ class ProfileScreen extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(context, isDark),
-              const SizedBox(height: 16),
-              _buildProfileInfo(context, theme, isDark),
-              const SizedBox(height: 20),
-              _buildBioCard(theme, isDark),
-              const SizedBox(height: 24),
-              _buildSkillsSection(theme, isDark),
-              const SizedBox(height: 24),
-              _buildContactSection(context, theme, isDark),
-              const SizedBox(height: 24),
-              _buildDownloadButton(context),
-              const SizedBox(height: 32),
-              _buildFooter(theme),
-              const SizedBox(height: 16),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context, bool isDark) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          'Profil',
+      appBar: AppBar(
+        title: Text(
+          'Profil & Akun',
           style: TextStyle(
             fontFamily: 'PlayfairDisplay',
             fontSize: 28,
@@ -80,244 +49,368 @@ class ProfileScreen extends StatelessWidget {
             color: AppColors.goldVisible(isDark),
           ),
         ),
-        IconButton(
-          icon: Icon(
-            Icons.share,
-            color: isDark
-                ? AppColors.darkTextPrimary
-                : AppColors.lightTextPrimary,
-          ),
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                duration: Duration(milliseconds: 800),
-                content: Text('Fungsi share dalam pengembangan'),
-              ),
-            );
-          },
-          tooltip: 'Bagikan Profil',
-        ),
-      ],
-    );
-  }
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            // 1. Identity Header (Premium Card)
+            _buildIdentityCard(context, theme, isDark),
+            const SizedBox(height: 32),
 
-  Widget _buildProfileInfo(BuildContext context, ThemeData theme, bool isDark) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        const ProfileAvatar(size: 92),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _name,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'PlayfairDisplay',
+            // 2. Action Menu
+            _buildSectionHeader(theme, 'Menu Aplikasi', isDark),
+            const SizedBox(height: 12),
+            _buildMenuContainer(
+              isDark,
+              children: [
+                _buildMenuOption(
+                  context,
+                  title: 'Pengaturan Aplikasi',
+                  subtitle: 'Tema & Notifikasi',
+                  icon: Icons.tune,
+                  isDark: isDark,
+                  onTap: () => _showSettingsSheet(context),
+                ),
+                _buildDivider(isDark),
+                _buildMenuOption(
+                  context,
+                  title: 'Tentang Developer',
+                  subtitle: 'Bio, Skills & Kontak',
+                  icon: Icons.person_outline,
+                  isDark: isDark,
+                  onTap: () => _showDeveloperInfo(context, theme, isDark),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 32),
+
+            // 3. Main Action
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Fitur Unduh CV segera hadir!'),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.download_rounded),
+                label: const Text('Unduh Resume / CV'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  side: BorderSide(color: AppColors.goldVisible(isDark)),
+                  foregroundColor: AppColors.goldVisible(isDark),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(_role, style: theme.textTheme.bodyMedium),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: [
-                  _buildChip(_location, isDark),
-                  _buildChip('Open-source', isDark),
-                ],
+            ),
+
+            const SizedBox(height: 48),
+            Text(
+              'Kulinere v2.0 • © ${DateTime.now().year} Baren',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color:
+                    (theme.textTheme.bodySmall?.color ??
+                            (theme.brightness == Brightness.dark
+                                ? Colors.white
+                                : Colors.black))
+                        .withOpacity(0.6),
+                fontWeight: FontWeight.w600,
               ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildChip(String label, bool isDark) {
-    return Chip(
-      label: Text(label),
-      backgroundColor: AppColors.goldVisible(isDark).withOpacity(0.15),
-      side: BorderSide.none,
-    );
-  }
-
-  Widget _buildBioCard(ThemeData theme, bool isDark) {
-    return Card(
-      elevation: isDark ? 0 : 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: isDark ? AppColors.darkDivider : Colors.transparent,
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Text(
-          _bio,
-          style: theme.textTheme.bodyMedium?.copyWith(height: 1.6),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildSkillsSection(ThemeData theme, bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Keahlian',
-          style: theme.textTheme.titleLarge?.copyWith(
-            color: AppColors.goldVisible(isDark),
-            fontFamily: 'PlayfairDisplay',
-          ),
-        ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: _skills.map((s) => _buildChip(s, isDark)).toList(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildContactSection(
+  Widget _buildIdentityCard(
     BuildContext context,
     ThemeData theme,
     bool isDark,
   ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Kontak',
-          style: theme.textTheme.titleLarge?.copyWith(
-            color: AppColors.goldVisible(isDark),
-            fontFamily: 'PlayfairDisplay',
-          ),
-        ),
-        const SizedBox(height: 12),
-        Card(
-          elevation: isDark ? 0 : 1,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(
-              color: isDark ? AppColors.darkDivider : Colors.transparent,
-            ),
-          ),
-          child: Column(
-            children: _links.entries
-                .map((e) => _buildContactTile(context, e.key, e.value, isDark))
-                .toList(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildContactTile(
-    BuildContext context,
-    String title,
-    String url,
-    bool isDark,
-  ) {
-    final goldColor = AppColors.goldVisible(isDark);
-    return ListTile(
-      leading: CircleAvatar(
-        radius: 20,
-        backgroundColor: goldColor.withOpacity(0.15),
-        child: Icon(_getIconForLink(title), color: goldColor),
-      ),
-      title: Text(title, style: Theme.of(context).textTheme.titleMedium),
-      subtitle: Text(
-        url,
-        overflow: TextOverflow.ellipsis,
-        style: Theme.of(context).textTheme.bodySmall,
-      ),
-      trailing: IconButton(
-        icon: Icon(Icons.open_in_new, color: goldColor),
-        onPressed: () => _showLinkDialog(context, title, url),
-        tooltip: 'Lihat/Salin link',
-      ),
-      onTap: () => _showLinkDialog(context, title, url),
-    );
-  }
-
-  Widget _buildDownloadButton(BuildContext context) {
-    return SizedBox(
+    return Container(
       width: double.infinity,
-      child: FilledButton.icon(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              duration: Duration(milliseconds: 800),
-              content: Text('Unduh CV dalam pengembangan'),
-            ),
-          );
-        },
-        icon: const Icon(Icons.file_download),
-        label: const Text('Unduh CV'),
-        style: FilledButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 14),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: AppColors.goldVisible(isDark).withOpacity(0.3),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
-    );
-  }
-
-  Widget _buildFooter(ThemeData theme) {
-    return Center(
-      child: Text(
-        '© ${DateTime.now().year} Baren. All Rights Reserved.',
-        style: theme.textTheme.bodySmall,
-      ),
-    );
-  }
-
-  void _showLinkDialog(BuildContext context, String title, String url) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(title),
-        content: SelectableText(url),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: url));
-              Navigator.of(ctx).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  duration: Duration(milliseconds: 800),
-                  content: Text('Link disalin ke clipboard'),
-                ),
-              );
-            },
-            child: Text(
-              'Salin',
-              style: TextStyle(
-                color: AppColors.goldVisible(
-                  Theme.of(context).brightness == Brightness.dark,
-                ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.goldVisible(isDark),
+                width: 2,
               ),
             ),
+            child: const ProfileAvatar(size: 100),
           ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Tutup'),
+          const SizedBox(height: 16),
+          Text(
+            _name,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontFamily: 'PlayfairDisplay',
+              fontWeight: FontWeight.bold,
+              color: AppColors.goldVisible(isDark),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _role,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: isDark
+                  ? AppColors.darkTextPrimary
+                  : AppColors.lightTextPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.goldVisible(isDark).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.email_outlined,
+                  size: 14,
+                  color: AppColors.goldVisible(isDark),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _email,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.goldVisible(isDark),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  IconData _getIconForLink(String key) {
-    return switch (key) {
-      'GitHub' => Icons.code,
-      'LinkedIn' => Icons.business,
-      'Email' => Icons.email,
-      'Scholar' => Icons.school,
-      _ => Icons.link,
-    };
+  Widget _buildSectionHeader(ThemeData theme, String title, bool isDark) {
+    return SizedBox(
+      width: double.infinity,
+      child: Text(
+        title.toUpperCase(),
+        style: theme.textTheme.labelMedium?.copyWith(
+          letterSpacing: 1.5,
+          fontWeight: FontWeight.bold,
+          color: isDark
+              ? AppColors.darkTextSecondary
+              : AppColors.lightTextSecondary,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuContainer(bool isDark, {required List<Widget> children}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? AppColors.darkDivider : AppColors.lightDivider,
+        ),
+      ),
+      child: Column(children: children),
+    );
+  }
+
+  Widget _buildMenuOption(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required bool isDark,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      leading: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: (isDark
+              ? AppColors.darkBackground
+              : AppColors.lightBackground),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: AppColors.goldVisible(isDark), size: 22),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontWeight: FontWeight.w600,
+          color: isDark
+              ? AppColors.darkTextPrimary
+              : AppColors.lightTextPrimary,
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(
+          fontSize: 12,
+          color: isDark
+              ? AppColors.darkTextSecondary
+              : AppColors.lightTextSecondary,
+        ),
+      ),
+      trailing: Icon(
+        Icons.arrow_forward_ios_rounded,
+        size: 16,
+        color: isDark
+            ? AppColors.darkTextSecondary
+            : AppColors.lightTextSecondary,
+      ),
+    );
+  }
+
+  Widget _buildDivider(bool isDark) {
+    return Divider(
+      height: 1,
+      indent: 70,
+      color: isDark ? AppColors.darkDivider : AppColors.lightDivider,
+    );
+  }
+
+  void _showSettingsSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const AppSettingsSheet(),
+    );
+  }
+
+  void _showDeveloperInfo(BuildContext context, ThemeData theme, bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.7,
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 24),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF3E3E3E)
+                        : const Color(0xFFE0E0E0),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Text(
+                'Tentang Developer',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontFamily: 'PlayfairDisplay',
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.goldVisible(isDark),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text('BIO', style: theme.textTheme.labelLarge),
+              const SizedBox(height: 8),
+              Text(_bio, style: theme.textTheme.bodyMedium),
+              const SizedBox(height: 24),
+
+              Text('SKILLS', style: theme.textTheme.labelLarge),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _skills
+                    .map(
+                      (s) => Chip(
+                        label: Text(s),
+                        backgroundColor: AppColors.goldVisible(
+                          isDark,
+                        ).withOpacity(0.1),
+                        side: BorderSide.none,
+                      ),
+                    )
+                    .toList(),
+              ),
+              const SizedBox(height: 24),
+
+              Text('CONTACT', style: theme.textTheme.labelLarge),
+              const SizedBox(height: 12),
+              Column(
+                children: _links.entries
+                    .map(
+                      (e) => ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(
+                          Icons.link,
+                          color: AppColors.goldVisible(isDark),
+                        ),
+                        title: Text(e.key),
+                        subtitle: Text(
+                          e.value,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        onTap: () {
+                          Clipboard.setData(ClipboardData(text: e.value));
+                          Navigator.pop(context); // Close sheet immediately
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Link disalin!'),
+                              duration: Duration(seconds: 1),
+                            ),
+                          );
+                        },
+                      ),
+                    )
+                    .toList(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

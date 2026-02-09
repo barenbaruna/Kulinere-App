@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:kulinere/core/theme/app_colors.dart';
+import 'package:kulinere/data/models/restaurant.dart';
 import 'package:kulinere/data/models/restaurant_detail.dart';
-import 'package:kulinere/providers/bookmark_provider.dart';
+import 'package:kulinere/providers/favorites_provider.dart';
 import 'package:kulinere/widgets/cached_image.dart';
 
 /// Restaurant detail header with hero image, info overlay, and action buttons.
@@ -10,7 +11,7 @@ import 'package:kulinere/widgets/cached_image.dart';
 /// Features:
 /// - Hero animation for image transition
 /// - Gradient overlay with restaurant name, rating, city
-/// - Back and bookmark action buttons
+/// - Back and favorite action buttons (heart icon)
 class RestaurantHeader extends StatelessWidget {
   final RestaurantDetail restaurant;
   final String heroTagPrefix;
@@ -28,7 +29,7 @@ class RestaurantHeader extends StatelessWidget {
         _buildHeroImage(),
         _buildInfoOverlay(context),
         _buildBackButton(context),
-        _buildBookmarkButton(context),
+        _buildFavoriteButton(context),
       ],
     );
   }
@@ -55,7 +56,7 @@ class RestaurantHeader extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
+            colors: [Colors.transparent, Colors.black.withValues(alpha: 0.7)],
           ),
         ),
         child: Column(
@@ -109,21 +110,32 @@ class RestaurantHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildBookmarkButton(BuildContext context) {
+  Widget _buildFavoriteButton(BuildContext context) {
     return Positioned(
       top: MediaQuery.of(context).padding.top + 8,
       right: 8,
-      child: Consumer<BookmarkProvider>(
-        builder: (context, bookmarkProvider, child) {
-          final isBookmarked = bookmarkProvider.isBookmarked(restaurant.id);
+      child: Consumer<FavoritesProvider>(
+        builder: (context, favoritesProvider, child) {
+          final isFavorite = favoritesProvider.isFavorite(restaurant.id);
           return CircleAvatar(
             backgroundColor: Colors.black38,
             child: IconButton(
               icon: Icon(
-                isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                color: isBookmarked ? AppColors.gold : Colors.white,
+                isFavorite ? Icons.favorite : Icons.favorite_border,
+                color: isFavorite ? AppColors.gold : Colors.white,
               ),
-              onPressed: () => bookmarkProvider.toggleBookmark(restaurant.id),
+              onPressed: () {
+                // Convert RestaurantDetail to Restaurant for favorites
+                final restaurantModel = Restaurant(
+                  id: restaurant.id,
+                  name: restaurant.name,
+                  city: restaurant.city,
+                  rating: restaurant.rating,
+                  pictureId: restaurant.pictureId,
+                  description: restaurant.description,
+                );
+                favoritesProvider.toggleFavorite(restaurantModel);
+              },
             ),
           );
         },

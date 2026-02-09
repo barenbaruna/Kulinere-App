@@ -34,10 +34,11 @@ class AppErrorWidget extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              message,
+              _getFriendlyMessage(message),
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
+
             const SizedBox(height: 24),
             FilledButton.icon(
               onPressed: onRetry,
@@ -48,5 +49,26 @@ class AppErrorWidget extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _getFriendlyMessage(String error) {
+    if (error.contains('SocketException') ||
+        error.contains('Failed host lookup') ||
+        error.contains('Connection refused')) {
+      return 'Tidak ada koneksi internet.\nPeriksa jaringan Anda.';
+    }
+    if (error.contains('TimeoutException') ||
+        error.contains('Connection timed out')) {
+      return 'Koneksi waktu habis.\nSilakan coba lagi.';
+    }
+    if (error.contains('404')) {
+      return 'Data tidak ditemukan.';
+    }
+    if (error.contains('500') ||
+        error.contains('502') ||
+        error.contains('503')) {
+      return 'Terjadi gangguan pada server.\nCobalah beberapa saat lagi.';
+    }
+    return error;
   }
 }

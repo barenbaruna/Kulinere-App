@@ -20,15 +20,8 @@ import 'package:kulinere/widgets/profile_avatar.dart';
 /// - Horizontal scrollable city filter cards
 /// - Pull-to-refresh restaurant list
 /// - Search bar navigation to Jelajahi tab
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
-
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  String? _selectedCity;
 
   @override
   Widget build(BuildContext context) {
@@ -43,8 +36,8 @@ class _HomeScreenState extends State<HomeScreen> {
               RestaurantListLoadingState() => const LoadingWidget(
                 message: 'Memuat daftar restoran...',
               ),
-              RestaurantListLoadedState(data: final restaurants) =>
-                _buildContent(context, restaurants, provider, isDark),
+              RestaurantListLoadedState(data: final allRestaurants) =>
+                _buildContent(context, allRestaurants, provider, isDark),
               RestaurantListErrorState(error: final message) => AppErrorWidget(
                 message: message,
                 onRetry: () => provider.fetchRestaurantList(),
@@ -58,19 +51,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildContent(
     BuildContext context,
-    List<Restaurant> restaurants,
+    List<Restaurant> allRestaurants,
     RestaurantListProvider provider,
     bool isDark,
   ) {
     final cityMap = <String, int>{};
-    for (final r in restaurants) {
+    for (final r in allRestaurants) {
       cityMap[r.city] = (cityMap[r.city] ?? 0) + 1;
     }
     final uniqueCities = cityMap.keys.toList();
 
-    final displayedRestaurants = _selectedCity == null
-        ? restaurants
-        : restaurants.where((r) => r.city == _selectedCity).toList();
+    // Use filtered list from provider
+    final displayedRestaurants = provider.restaurants;
+    final selectedCity = provider.selectedCity;
 
     return RefreshIndicator(
       onRefresh: () => provider.fetchRestaurantList(),
@@ -87,6 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
               isDark,
               uniqueCities,
               cityMap,
+              provider,
             ),
           ),
           SliverToBoxAdapter(
@@ -94,10 +88,13 @@ class _HomeScreenState extends State<HomeScreen> {
               context,
               isDark,
               displayedRestaurants.length,
+              selectedCity,
             ),
           ),
           displayedRestaurants.isEmpty
-              ? SliverFillRemaining(child: _buildEmptyState(context))
+              ? SliverFillRemaining(
+                  child: _buildEmptyState(context, selectedCity),
+                )
               : SliverPadding(
                   padding: const EdgeInsets.only(bottom: 100),
                   sliver: SliverList(
@@ -251,8 +248,10 @@ class _HomeScreenState extends State<HomeScreen> {
     bool isDark,
     List<String> cities,
     Map<String, int> cityMap,
+    RestaurantListProvider provider,
   ) {
     final goldColor = AppColors.goldVisible(isDark);
+    final selectedCity = provider.selectedCity;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -273,9 +272,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-              if (_selectedCity != null)
+              if (selectedCity != null)
                 TextButton.icon(
-                  onPressed: () => setState(() => _selectedCity = null),
+                  onPressed: () => provider.setSelectedCity(null),
                   icon: Icon(Icons.clear, size: 16, color: goldColor),
                   label: Text(
                     'Semua',
@@ -292,7 +291,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 100,
+          height: 120, // Increased height to prevent overflow
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
@@ -304,11 +303,9 @@ class _HomeScreenState extends State<HomeScreen> {
               return LocationCard(
                 city: city,
                 restaurantCount: cityMap[city] ?? 0,
-                isSelected: _selectedCity == city,
+                isSelected: selectedCity == city,
                 onTap: () {
-                  setState(() {
-                    _selectedCity = _selectedCity == city ? null : city;
-                  });
+                  provider.setSelectedCity(selectedCity == city ? null : city);
                 },
               );
             },
@@ -323,6 +320,7 @@ class _HomeScreenState extends State<HomeScreen> {
     BuildContext context,
     bool isDark,
     int count,
+    String? selectedCity,
   ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -336,8 +334,8 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              _selectedCity != null
-                  ? '$count pilihan kuliner di $_selectedCity'
+              selectedCity != null
+                  ? '$count pilihan kuliner di $selectedCity'
                   : '$count pilihan kuliner menanti',
               style: TextStyle(
                 fontSize: 14,
@@ -354,7 +352,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
+  Widget _buildEmptyState(BuildContext context, String? selectedCity) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -369,10 +367,10 @@ class _HomeScreenState extends State<HomeScreen> {
             'Tidak ada restoran',
             style: Theme.of(context).textTheme.titleLarge,
           ),
-          if (_selectedCity != null) ...[
+          if (selectedCity != null) ...[
             const SizedBox(height: 8),
             Text(
-              'di $_selectedCity',
+              'di $selectedCity',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ],

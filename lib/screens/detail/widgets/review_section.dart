@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:kulinere/core/theme/app_colors.dart';
 import 'package:kulinere/data/models/customer_review.dart';
+import 'package:kulinere/providers/restaurant_detail_provider.dart';
 
 /// Customer review section with expandable list.
 ///
@@ -8,7 +10,7 @@ import 'package:kulinere/data/models/customer_review.dart';
 /// - Shows initial 3 reviews with "See All" button
 /// - Empty state when no reviews exist
 /// - Gold-accented styling per design system
-class ReviewSection extends StatefulWidget {
+class ReviewSection extends StatelessWidget {
   final List<CustomerReview> reviews;
   final int initialDisplayCount;
 
@@ -19,34 +21,33 @@ class ReviewSection extends StatefulWidget {
   });
 
   @override
-  State<ReviewSection> createState() => _ReviewSectionState();
-}
-
-class _ReviewSectionState extends State<ReviewSection> {
-  bool _showAll = false;
-
-  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final goldColor = AppColors.goldVisible(isDark);
 
-    final displayedReviews = _showAll
-        ? widget.reviews
-        : widget.reviews.take(widget.initialDisplayCount).toList();
-    final hasMore = widget.reviews.length > widget.initialDisplayCount;
+    return Consumer<RestaurantDetailProvider>(
+      builder: (context, provider, child) {
+        final showAll = provider.showAllReviews;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildHeader(isDark, goldColor),
-        const SizedBox(height: 16),
-        if (widget.reviews.isEmpty)
-          _buildEmptyState(context, isDark)
-        else ...[
-          _buildReviewList(displayedReviews),
-          if (hasMore) _buildToggleButton(goldColor),
-        ],
-      ],
+        final displayedReviews = showAll
+            ? reviews
+            : reviews.take(initialDisplayCount).toList();
+        final hasMore = reviews.length > initialDisplayCount;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(isDark, goldColor),
+            const SizedBox(height: 16),
+            if (reviews.isEmpty)
+              _buildEmptyState(context, isDark)
+            else ...[
+              _buildReviewList(displayedReviews),
+              if (hasMore) _buildToggleButton(context, provider, goldColor),
+            ],
+          ],
+        );
+      },
     );
   }
 
@@ -74,7 +75,7 @@ class _ReviewSectionState extends State<ReviewSection> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
-            '${widget.reviews.length}',
+            '${reviews.length}',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -96,15 +97,19 @@ class _ReviewSectionState extends State<ReviewSection> {
     );
   }
 
-  Widget _buildToggleButton(Color goldColor) {
-    final isExpanded = _showAll;
-    final remaining = widget.reviews.length - widget.initialDisplayCount;
+  Widget _buildToggleButton(
+    BuildContext context,
+    RestaurantDetailProvider provider,
+    Color goldColor,
+  ) {
+    final isExpanded = provider.showAllReviews;
+    final remaining = reviews.length - initialDisplayCount;
 
     return Padding(
       padding: const EdgeInsets.only(top: 16),
       child: Center(
         child: TextButton.icon(
-          onPressed: () => setState(() => _showAll = !_showAll),
+          onPressed: () => provider.toggleShowAllReviews(),
           icon: Icon(
             isExpanded ? Icons.expand_less : Icons.expand_more,
             color: goldColor,

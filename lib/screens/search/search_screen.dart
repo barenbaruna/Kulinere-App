@@ -29,8 +29,6 @@ class _SearchScreenState extends State<SearchScreen> {
   final _controller = TextEditingController();
   final _debouncer = Debouncer();
   final _focusNode = FocusNode();
-  String _sortBy = 'default';
-  String? _selectedCity;
 
   @override
   void initState() {
@@ -65,7 +63,13 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _onSearchChanged(String query) {
-    setState(() => _selectedCity = null);
+    if (query.isEmpty) {
+      context.read<RestaurantSearchProvider>().reset();
+      return;
+    }
+
+    // Reset city filter when searching new term
+    context.read<RestaurantSearchProvider>().setSelectedCity(null);
     _debouncer.run(() {
       context.read<RestaurantSearchProvider>().searchRestaurants(query);
     });
@@ -73,23 +77,8 @@ class _SearchScreenState extends State<SearchScreen> {
 
   void _clearSearch() {
     _controller.clear();
-    setState(() => _selectedCity = null);
     context.read<RestaurantSearchProvider>().reset();
     _focusNode.requestFocus();
-  }
-
-  List<Restaurant> _filterAndSort(List<Restaurant> restaurants) {
-    var filtered = restaurants;
-
-    if (_selectedCity != null) {
-      filtered = filtered.where((r) => r.city == _selectedCity).toList();
-    }
-
-    if (_sortBy == 'rating') {
-      filtered = [...filtered]..sort((a, b) => b.rating.compareTo(a.rating));
-    }
-
-    return filtered;
   }
 
   List<String> _extractUniqueCities(List<Restaurant> restaurants) {
@@ -125,12 +114,12 @@ class _SearchScreenState extends State<SearchScreen> {
 
                 return CustomScrollView(
                   slivers: [
-                    SliverToBoxAdapter(child: _buildHeader(isDark)),
+                    SliverToBoxAdapter(child: _buildHeader(isDark, provider)),
                     SliverToBoxAdapter(child: _buildSearchBar(isDark)),
                     SliverToBoxAdapter(
-                      child: _buildFilterChips(isDark, cities),
+                      child: _buildFilterChips(isDark, cities, provider),
                     ),
-                    _buildResultCountSliver(state, isDark),
+                    _buildResultCountSliver(provider, isDark),
                     _buildResultsSliver(provider, isDark),
                   ],
                 );
@@ -142,7 +131,7 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildHeader(bool isDark) {
+  Widget _buildHeader(bool isDark, RestaurantSearchProvider provider) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Text(
@@ -211,7 +200,14 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildFilterChips(bool isDark, List<String> cities) {
+  Widget _buildFilterChips(
+    bool isDark,
+    List<String> cities,
+    RestaurantSearchProvider provider,
+  ) {
+    final sortBy = provider.sortBy;
+    final selectedCity = provider.selectedCity;
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -219,26 +215,26 @@ class _SearchScreenState extends State<SearchScreen> {
         children: [
           _FilterChip(
             label: 'Semua',
-            isSelected: _sortBy == 'default' && _selectedCity == null,
-            onTap: () => setState(() {
-              _sortBy = 'default';
-              _selectedCity = null;
-            }),
+            isSelected: sortBy == 'default' && selectedCity == null,
+            onTap: () {
+              provider.setSortBy('default');
+              provider.setSelectedCity(null);
+            },
           ),
           const SizedBox(width: 8),
           _FilterChip(
             label: 'Rating',
-            isSelected: _sortBy == 'rating',
+            isSelected: sortBy == 'rating',
             icon: Icons.star,
-            onTap: () => setState(() => _sortBy = 'rating'),
+            onTap: () => provider.setSortBy('rating'),
           ),
           if (cities.length > 1) ...[
             const SizedBox(width: 8),
             _CityFilterChip(
-              selectedCity: _selectedCity,
+              selectedCity: selectedCity,
               cities: cities,
-              onCitySelected: (city) => setState(() => _selectedCity = city),
-              onClearFilter: () => setState(() => _selectedCity = null),
+              onCitySelected: (city) => provider.setSelectedCity(city),
+              onClearFilter: () => provider.setSelectedCity(null),
             ),
           ],
         ],
@@ -246,10 +242,15 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildResultCountSliver(RestaurantSearchState state, bool isDark) {
-    if (state is RestaurantSearchLoadedState && state.data.isNotEmpty) {
-      final filtered = _filterAndSort(state.data);
-      final cityLabel = _selectedCity != null ? ' di $_selectedCity' : '';
+  Widget _buildResultCountSliver(
+    RestaurantSearchProvider provider,
+    bool isDark,
+  ) {
+    final filtered = provider.result;
+    final selectedCity = provider.selectedCity;
+
+    if (filtered.isNotEmpty) {
+      final cityLabel = selectedCity != null ? ' di $selectedCity' : '';
 
       return SliverToBoxAdapter(
         child: Padding(
@@ -304,12 +305,16 @@ class _SearchScreenState extends State<SearchScreen> {
         );
       }
 
-      final filteredResults = _filterAndSort(state.data);
+      final filteredResults = provider.result;
 
       if (filteredResults.isEmpty) {
         return SliverFillRemaining(
           hasScrollBody: false,
-          child: _buildNoResultsForCity(isDark),
+          child: _buildNoResultsForCity(
+            isDark,
+            provider.selectedCity,
+            provider,
+          ),
         );
       }
 
@@ -436,7 +441,11 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildNoResultsForCity(bool isDark) {
+  Widget _buildNoResultsForCity(
+    bool isDark,
+    String? selectedCity,
+    RestaurantSearchProvider provider,
+  ) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -448,7 +457,7 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Tidak ada di $_selectedCity',
+            'Tidak ada di $selectedCity',
             style: TextStyle(
               fontFamily: 'PlayfairDisplay',
               fontSize: 18,
@@ -460,7 +469,7 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
           const SizedBox(height: 8),
           TextButton(
-            onPressed: () => setState(() => _selectedCity = null),
+            onPressed: () => provider.setSelectedCity(null),
             child: Text(
               'Hapus filter kota',
               style: TextStyle(color: AppColors.goldVisible(isDark)),

@@ -23,7 +23,6 @@ class _ReviewFormState extends State<ReviewForm> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _reviewController = TextEditingController();
-  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -35,10 +34,10 @@ class _ReviewFormState extends State<ReviewForm> {
   Future<void> _submitReview() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isSubmitting = true);
+    final provider = context.read<RestaurantDetailProvider>();
 
     try {
-      await context.read<RestaurantDetailProvider>().addReview(
+      await provider.addReview(
         name: _nameController.text.trim(),
         review: _reviewController.text.trim(),
       );
@@ -57,6 +56,7 @@ class _ReviewFormState extends State<ReviewForm> {
             ),
           ),
         );
+        provider.resetReviewForm();
         widget.onSubmitted?.call();
       }
     } catch (e) {
@@ -64,7 +64,9 @@ class _ReviewFormState extends State<ReviewForm> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Gagal mengirim review: ${e.toString().replaceFirst("Exception: ", "")}',
+              provider.submissionError.isNotEmpty
+                  ? _getFriendlyErrorMessage(provider.submissionError)
+                  : 'Gagal mengirim review',
             ),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
@@ -74,8 +76,6 @@ class _ReviewFormState extends State<ReviewForm> {
           ),
         );
       }
-    } finally {
-      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
@@ -270,28 +270,48 @@ class _ReviewFormState extends State<ReviewForm> {
   }
 
   Widget _buildSubmitButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: FilledButton.icon(
-        onPressed: _isSubmitting ? null : _submitReview,
-        icon: _isSubmitting
-            ? const SizedBox(
-                height: 18,
-                width: 18,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              )
-            : const Icon(Icons.send_rounded, size: 18),
-        label: Text(_isSubmitting ? 'Mengirim...' : 'Kirim Review'),
-        style: FilledButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+    return Consumer<RestaurantDetailProvider>(
+      builder: (context, provider, child) {
+        final isSubmitting =
+            provider.submissionState == ReviewSubmissionState.submitting;
+
+        return SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: isSubmitting ? null : _submitReview,
+            icon: isSubmitting
+                ? const SizedBox(
+                    height: 18,
+                    width: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.send_rounded, size: 18),
+            label: Text(isSubmitting ? 'Mengirim...' : 'Kirim Review'),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
+  }
+
+  String _getFriendlyErrorMessage(String error) {
+    if (error.contains('SocketException') ||
+        error.contains('Failed host lookup') ||
+        error.contains('Connection refused')) {
+      return 'Tidak ada koneksi internet. Cek sinyal kamu ya!';
+    }
+    if (error.contains('TimeoutException') ||
+        error.contains('Connection timed out')) {
+      return 'Yah, waktu habis. Coba kirim lagi ya.';
+    }
+    return error;
   }
 }

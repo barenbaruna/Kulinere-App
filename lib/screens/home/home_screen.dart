@@ -5,11 +5,11 @@ import 'package:kulinere/data/models/restaurant.dart';
 import 'package:kulinere/providers/navigation_provider.dart';
 import 'package:kulinere/providers/restaurant_list_provider.dart';
 import 'package:kulinere/providers/settings_provider.dart';
+import 'package:kulinere/screens/home/widgets/notification_status_sheet.dart';
 
 import 'package:kulinere/providers/user_profile_provider.dart';
 import 'package:kulinere/screens/detail/detail_screen.dart';
 import 'package:kulinere/screens/home/widgets/restaurant_card.dart';
-
 import 'package:kulinere/states/restaurant_list_state.dart';
 import 'package:kulinere/widgets/error_widget.dart';
 import 'package:kulinere/widgets/loading_widget.dart';
@@ -124,12 +124,11 @@ class HomeScreen extends StatelessWidget {
         children: [
           IconButton(
             onPressed: () {
-              // Notification Status Check
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Tidak ada notifikasi baru'),
-                  duration: Duration(seconds: 1),
-                ),
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (_) => const NotificationStatusSheet(),
               );
             },
             icon: Stack(

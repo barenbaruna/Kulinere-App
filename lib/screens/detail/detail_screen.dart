@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:readmore/readmore.dart';
 import 'package:provider/provider.dart';
 import 'package:kulinere/core/theme/app_colors.dart';
 import 'package:kulinere/data/models/restaurant_detail.dart';
@@ -157,24 +158,12 @@ class _DetailScreenState extends State<DetailScreen> {
           color: isDark ? AppColors.darkDivider : AppColors.lightDivider,
         ),
       ),
-      child: Column(
-        children: [
-          _buildInfoRow(
-            context,
-            Icons.location_on,
-            'Alamat',
-            restaurant.address,
-            isDark,
-          ),
-          const SizedBox(height: 16),
-          _buildInfoRow(
-            context,
-            Icons.location_city,
-            'Kota',
-            restaurant.city,
-            isDark,
-          ),
-        ],
+      child: _buildInfoRow(
+        context,
+        Icons.location_on,
+        'Alamat',
+        restaurant.address,
+        isDark,
       ),
     );
   }
@@ -192,7 +181,7 @@ class _DetailScreenState extends State<DetailScreen> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppColors.gold.withOpacity(0.15),
+            color: AppColors.gold.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, size: 20, color: AppColors.gold),
@@ -233,7 +222,9 @@ class _DetailScreenState extends State<DetailScreen> {
           .map<Widget>(
             (category) => Chip(
               label: Text(category.name),
-              backgroundColor: AppColors.gold.withOpacity(0.2),
+              backgroundColor: AppColors.gold.withValues(
+                alpha: 0.2,
+              ), // Fixed withOpacity to withValues
               side: BorderSide.none,
             ),
           )
@@ -255,7 +246,7 @@ class _DetailScreenState extends State<DetailScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.15 : 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.05),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -288,12 +279,24 @@ class _DetailScreenState extends State<DetailScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            Text(
+            ReadMoreText(
               restaurant.description,
+              trimMode: TrimMode.Line,
+              trimLines: 4,
+              trimCollapsedText: '  Baca selengkapnya',
+              trimExpandedText: '  Tutup',
               style: Theme.of(
                 context,
               ).textTheme.bodyLarge?.copyWith(height: 1.6),
               textAlign: TextAlign.justify,
+              moreStyle: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppColors.goldVisible(isDark),
+              ),
+              lessStyle: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppColors.goldVisible(isDark),
+              ),
             ),
           ],
         ),
